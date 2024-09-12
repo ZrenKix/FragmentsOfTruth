@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Locked : MonoBehaviour, IInteractable
@@ -12,9 +11,23 @@ public class Locked : MonoBehaviour, IInteractable
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
+        if (!bInteractable) return false;
+
         Debug.Log("Opening Door");
         _audioSource.PlayOneShot(_audioClip);
-        Destroy(this.gameObject);
+
+        // Start a coroutine to destroy the object after the audio clip finishes
+        StartCoroutine(DestroyAfterAudio());
+
         return bInteractable;
+    }
+
+    private IEnumerator DestroyAfterAudio()
+    {
+        // Wait for the audio clip duration
+        yield return new WaitForSeconds(_audioClip.length);
+
+        // Destroy the object
+        Destroy(this.gameObject);
     }
 }
