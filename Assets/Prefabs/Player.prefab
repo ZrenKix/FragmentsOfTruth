@@ -32,9 +32,9 @@ Transform:
   m_GameObject: {fileID: 5429945871244271303}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.4, z: 0}
-  m_LocalScale: {x: 5, y: 5, z: 5}
-  m_ConstrainProportionsScale: 0
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4441311196783538196}
   - {fileID: 5094481803543316795}
@@ -128,6 +128,12 @@ MonoBehaviour:
   moveSpeed: 7
   lookSpeed: 2
   playerCamera: {fileID: 911089141883474751}
+  m_AudioSource: {fileID: 0}
+  m_FootstepSounds:
+  - {fileID: 8300000, guid: 42e65e088b3f4374e851b8dbd38f3df9, type: 3}
+  - {fileID: 8300000, guid: 8bc94ec6ed537e743b481638bdcd503d, type: 3}
+  - {fileID: 8300000, guid: 5a9383dda6cabc047b7a297602e93eb4, type: 3}
+  - {fileID: 8300000, guid: e9714160ce34f2b4ab63ff8c27bd68e1, type: 3}
 --- !u!54 &5069346444488516777
 Rigidbody:
   m_ObjectHideFlags: 0
