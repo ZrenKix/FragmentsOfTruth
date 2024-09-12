@@ -13,6 +13,7 @@ public class Key : MonoBehaviour, IInteractable
         if (_door == null) return false;
 
         _door.GetComponent<Locked>().bInteractable = true;
+        Destroy(this.gameObject);
         return true;
     }
 }
