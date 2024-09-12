@@ -2,13 +2,17 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    // 
     public float moveSpeed = 5f;
     public float lookSpeed = 2f;
     public Transform playerCamera;
-
     private Rigidbody rb;
     private Vector3 movement;
     private float yaw = 0f;
+
+    // Audio
+    [SerializeField] private AudioSource m_AudioSource;
+    [SerializeField] private AudioClip[] m_FootstepSounds;
 
     void Start()
     {
@@ -46,5 +50,22 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        if (movement != Vector3.zero && !m_AudioSource.isPlaying)
+        {
+            PlayFootStepAudio();
+        }
     }
+
+    private void PlayFootStepAudio()
+    {
+        // pick & play a random footstep sound from the array,
+        // excluding sound at index 0
+        int n = Random.Range(1, m_FootstepSounds.Length);
+        m_AudioSource.clip = m_FootstepSounds[n];
+        m_AudioSource.PlayOneShot(m_AudioSource.clip);
+        // move picked sound to index 0 so it's not picked next time
+        m_FootstepSounds[n] = m_FootstepSounds[0];
+        m_FootstepSounds[0] = m_AudioSource.clip;
+    }
+
 }
