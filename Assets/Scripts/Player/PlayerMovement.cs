@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
     private Vector3 movement;
     private float yaw = 0f;
+    public bool pausedMovement = false;
 
     // Audio
     [SerializeField] private AudioSource m_AudioSource;
@@ -21,9 +22,15 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // Get input from the player
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
+        float moveX = 0;
+        float moveZ = 0;
+        if (!pausedMovement)
+        {
+            // Get input from the player
+            moveX = Input.GetAxis("Horizontal");
+            moveZ = Input.GetAxis("Vertical");
+        }
+        
 
         // Update yaw based on mouse input
         float mouseX = Input.GetAxis("Mouse X");
@@ -54,6 +61,16 @@ public class PlayerMovement : MonoBehaviour
         {
             PlayFootStepAudio();
         }
+    }
+
+    internal void PausePlayerMovement()
+    {
+        pausedMovement = true;
+    }
+
+    internal void ResumePlayerMovement()
+    {
+        pausedMovement = false;
     }
 
     private void PlayFootStepAudio()
