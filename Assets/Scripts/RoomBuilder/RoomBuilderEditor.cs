@@ -39,15 +39,23 @@ public class RoomBuilderEditor : Editor
             wallsProp = serializedObject.FindProperty("walls");
         }
 
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("floorMaterial"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("wallMaterial"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("ceilingMaterial"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("ceilingHeight"));
+        // *** Materials Section ***
+        EditorGUILayout.LabelField("Materials", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("floorMaterial"), new GUIContent("Floor Material"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("wallMaterial"), new GUIContent("Default Wall Material"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("ceilingMaterial"), new GUIContent("Ceiling Material"));
+        EditorGUILayout.Space();
 
-        // Display and edit vertex positions
-        showVerticesList = EditorGUILayout.Foldout(showVerticesList, "Floor Vertices");
+        // *** Ceiling Section ***
+        EditorGUILayout.LabelField("Ceiling", EditorStyles.boldLabel);
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("ceilingHeight"), new GUIContent("Ceiling Height"));
+        EditorGUILayout.Space();
+
+        // *** Vertices Section ***
+        showVerticesList = EditorGUILayout.Foldout(showVerticesList, "Vertices");
         if (showVerticesList)
         {
+            EditorGUILayout.LabelField("Floor Vertices", EditorStyles.boldLabel);
             EditorGUI.indentLevel++;
             for (int i = 0; i < roomBuilder.vertices.Count; i++)
             {
@@ -130,7 +138,7 @@ public class RoomBuilderEditor : Editor
             EditorGUI.indentLevel--;
         }
 
-        // Display wall settings
+        // *** Walls Section ***
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Walls", EditorStyles.boldLabel);
         EditorGUI.indentLevel++;
@@ -140,6 +148,7 @@ public class RoomBuilderEditor : Editor
         for (int i = 0; i < wallsCount; i++)
         {
             SerializedProperty wallProp = wallsProp.GetArrayElementAtIndex(i);
+            SerializedProperty nameProp = wallProp.FindPropertyRelative("name");
             SerializedProperty isVisibleProp = wallProp.FindPropertyRelative("isVisible");
             SerializedProperty openingsProp = wallProp.FindPropertyRelative("openings");
             SerializedProperty customMaterialProp = wallProp.FindPropertyRelative("customMaterial");
@@ -148,7 +157,7 @@ public class RoomBuilderEditor : Editor
             string vertexNameA = roomBuilder.vertices[i].name;
             string vertexNameB = roomBuilder.vertices[nextIndex].name;
 
-            string wallLabel = $"Wall {i} ({vertexNameA} - {vertexNameB})";
+            string wallLabel = $"{nameProp.stringValue} ({vertexNameA} - {vertexNameB})";
 
             // Use the foldout state from WallData
             var wallData = roomBuilder.walls[i];
@@ -156,6 +165,17 @@ public class RoomBuilderEditor : Editor
             if (wallData.foldout)
             {
                 EditorGUI.indentLevel++;
+
+                // Wall name
+                EditorGUI.BeginChangeCheck();
+                string newWallName = EditorGUILayout.TextField("Wall Name", nameProp.stringValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(roomBuilder, "Rename Wall");
+                    nameProp.stringValue = newWallName;
+                    // Update the wall label
+                    wallLabel = $"{newWallName} ({vertexNameA} - {vertexNameB})";
+                }
 
                 // Wall visibility
                 EditorGUI.BeginChangeCheck();
@@ -181,7 +201,7 @@ public class RoomBuilderEditor : Editor
                 SerializedProperty openingsArray = openingsProp;
                 int openingsCount = openingsArray.arraySize;
 
-                EditorGUILayout.LabelField("Openings");
+                EditorGUILayout.LabelField("Openings", EditorStyles.boldLabel);
                 EditorGUI.indentLevel++;
 
                 for (int j = 0; j < openingsCount; j++)
@@ -192,7 +212,7 @@ public class RoomBuilderEditor : Editor
                     SerializedProperty heightProp = openingProp.FindPropertyRelative("height");
                     SerializedProperty bottomProp = openingProp.FindPropertyRelative("bottom");
 
-                    EditorGUILayout.LabelField($"Opening {j + 1}");
+                    EditorGUILayout.LabelField($"Opening {j + 1}", EditorStyles.miniBoldLabel);
                     EditorGUI.indentLevel++;
 
                     EditorGUI.BeginChangeCheck();

@@ -38,12 +38,18 @@ public class RoomBuilder : MonoBehaviour
     [System.Serializable]
     public class WallData
     {
+        public string name; // Name of the wall
         public bool isVisible = true;
         public List<WallOpening> openings = new List<WallOpening>();
         public Material customMaterial = null; // Custom material for this wall
 
         [System.NonSerialized]
         public bool foldout = false; // Foldout state for the wall in the inspector
+
+        public WallData(string name)
+        {
+            this.name = name;
+        }
     }
 
     [SerializeField]
@@ -130,12 +136,24 @@ public class RoomBuilder : MonoBehaviour
         {
             // Add entries
             while (walls.Count < numWalls)
-                walls.Add(new WallData());
+            {
+                string wallName = "Wall " + walls.Count;
+                walls.Add(new WallData(wallName));
+            }
         }
         else if (walls.Count > numWalls)
         {
             // Remove entries
             walls.RemoveRange(numWalls, walls.Count - numWalls);
+        }
+
+        // Update wall names if necessary
+        for (int i = 0; i < walls.Count; i++)
+        {
+            if (string.IsNullOrEmpty(walls[i].name))
+            {
+                walls[i].name = "Wall " + i;
+            }
         }
     }
 
