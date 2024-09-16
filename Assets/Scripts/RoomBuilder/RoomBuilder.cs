@@ -1,11 +1,12 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEditor;
 
 [ExecuteInEditMode]
 public class RoomBuilder : MonoBehaviour
 {
     public Material floorMaterial;
-    public Material wallMaterial;
+    public Material wallMaterial; // Default wall material
     public Material ceilingMaterial;
     public float ceilingHeight = 1f;
 
@@ -13,9 +14,16 @@ public class RoomBuilder : MonoBehaviour
     public class VertexData
     {
         public string name;
-        public Transform transform;
+        public Vector3 localPosition;
+
+        public VertexData(string name, Vector3 localPosition)
+        {
+            this.name = name;
+            this.localPosition = localPosition;
+        }
     }
 
+    [SerializeField]
     public List<VertexData> vertices = new List<VertexData>();
 
     [System.Serializable]
@@ -32,8 +40,13 @@ public class RoomBuilder : MonoBehaviour
     {
         public bool isVisible = true;
         public List<WallOpening> openings = new List<WallOpening>();
+        public Material customMaterial = null; // Custom material for this wall
+
+        [System.NonSerialized]
+        public bool foldout = false; // Foldout state for the wall in the inspector
     }
 
+    [SerializeField]
     public List<WallData> walls = new List<WallData>();
 
     private MeshFilter meshFilter;
@@ -42,12 +55,20 @@ public class RoomBuilder : MonoBehaviour
 
     void OnEnable()
     {
-        InitializeVertices();
+        // Create default vertices if none exist
+        if (vertices.Count == 0)
+        {
+            CreateDefaultVertices();
+        }
+
+        AdjustWallsList();
+        ReconstructVertexTransforms();
         UpdateRoom();
     }
 
     void OnValidate()
     {
+        AdjustWallsList();
         UpdateRoom();
     }
 
@@ -60,28 +81,46 @@ public class RoomBuilder : MonoBehaviour
         }
     }
 
-    void InitializeVertices()
+    public void ReconstructVertexTransforms()
     {
-        // Find existing vertex GameObjects or create new ones if none exist
-        vertices.Clear();
-        foreach (Transform child in transform)
+        // Ensure each vertex has a corresponding child GameObject
+        foreach (var vertexData in vertices)
         {
-            if (child.name.StartsWith("Vertex_"))
+            Transform child = transform.Find(vertexData.name);
+            if (child == null)
             {
-                VertexData vertexData = new VertexData();
-                vertexData.name = child.name;
-                vertexData.transform = child;
-                vertices.Add(vertexData);
+                // Create a new GameObject for the vertex
+                GameObject vertexGO = new GameObject(vertexData.name);
+                vertexGO.transform.SetParent(transform, false);
+                vertexGO.transform.localPosition = vertexData.localPosition;
+            }
+            else
+            {
+                // Update the position
+                child.localPosition = vertexData.localPosition;
             }
         }
 
-        if (vertices.Count == 0)
+        // Remove any extra child GameObjects that are not in the vertices list
+        List<string> vertexNames = new List<string>();
+        foreach (var v in vertices)
         {
-            // Create default square room if no vertices exist
-            CreateDefaultVertices();
+            vertexNames.Add(v.name);
         }
 
-        AdjustWallsList();
+        List<Transform> childrenToRemove = new List<Transform>();
+        foreach (Transform child in transform)
+        {
+            if (!vertexNames.Contains(child.name))
+            {
+                childrenToRemove.Add(child);
+            }
+        }
+
+        foreach (var child in childrenToRemove)
+        {
+            DestroyImmediate(child.gameObject);
+        }
     }
 
     void AdjustWallsList()
@@ -123,14 +162,15 @@ public class RoomBuilder : MonoBehaviour
         {
             name = "Vertex_" + vertices.Count;
         }
+
+        VertexData vertexData = new VertexData(name, position);
+        vertices.Add(vertexData);
+
+        // Create a corresponding GameObject
         GameObject vertexGO = new GameObject(name);
+        Undo.RegisterCreatedObjectUndo(vertexGO, "Create Vertex");
         vertexGO.transform.SetParent(transform, false);
         vertexGO.transform.localPosition = position;
-
-        VertexData vertexData = new VertexData();
-        vertexData.name = name;
-        vertexData.transform = vertexGO.transform;
-        vertices.Add(vertexData);
 
         AdjustWallsList();
     }
@@ -139,9 +179,16 @@ public class RoomBuilder : MonoBehaviour
     {
         if (index >= 0 && index < vertices.Count)
         {
-            Transform vertexTransform = vertices[index].transform;
+            // Remove the vertex data
+            VertexData vertexData = vertices[index];
             vertices.RemoveAt(index);
-            DestroyImmediate(vertexTransform.gameObject);
+
+            // Destroy the corresponding GameObject
+            Transform child = transform.Find(vertexData.name);
+            if (child != null)
+            {
+                Undo.DestroyObjectImmediate(child.gameObject);
+            }
 
             AdjustWallsList();
         }
@@ -149,15 +196,14 @@ public class RoomBuilder : MonoBehaviour
 
     public void InsertVertex(int index, Vector3 position, string name)
     {
+        VertexData vertexData = new VertexData(name, position);
+        vertices.Insert(index, vertexData);
+
+        // Create a corresponding GameObject
         GameObject vertexGO = new GameObject(name);
+        Undo.RegisterCreatedObjectUndo(vertexGO, "Insert Vertex");
         vertexGO.transform.SetParent(transform, false);
         vertexGO.transform.localPosition = position;
-
-        VertexData vertexData = new VertexData();
-        vertexData.name = name;
-        vertexData.transform = vertexGO.transform;
-
-        vertices.Insert(index, vertexData);
 
         AdjustWallsList();
     }
@@ -187,7 +233,7 @@ public class RoomBuilder : MonoBehaviour
         List<Vector3> floorVertices = new List<Vector3>();
         foreach (var vertexData in vertices)
         {
-            floorVertices.Add(vertexData.transform.localPosition);
+            floorVertices.Add(vertexData.localPosition);
         }
 
         // Create the room mesh
@@ -196,8 +242,8 @@ public class RoomBuilder : MonoBehaviour
 
         List<Vector3> verticesList = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
-        List<int>[] submeshTriangles = new List<int>[3]; // 0: Floor, 1: Ceiling, 2: Walls
-        for (int i = 0; i < 3; i++)
+        List<int>[] submeshTriangles = new List<int>[2]; // 0: Floor, 1: Ceiling
+        for (int i = 0; i < 2; i++)
             submeshTriangles[i] = new List<int>();
 
         // *** Floor ***
@@ -240,6 +286,17 @@ public class RoomBuilder : MonoBehaviour
         submeshTriangles[1].AddRange(ceilingIndices);
 
         // *** Walls ***
+        // Collect wall triangles per material
+        Dictionary<Material, List<int>> wallSubmeshTriangles = new Dictionary<Material, List<int>>();
+
+        // Ensure the default wall material is included
+        Material defaultWallMaterial = wallMaterial != null ? wallMaterial : new Material(Shader.Find("Standard"));
+
+        if (!wallSubmeshTriangles.ContainsKey(defaultWallMaterial))
+        {
+            wallSubmeshTriangles[defaultWallMaterial] = new List<int>();
+        }
+
         for (int i = 0; i < floorVertices.Count; i++)
         {
             WallData wallData = walls[i];
@@ -264,23 +321,50 @@ public class RoomBuilder : MonoBehaviour
             // Handle wall openings
             List<WallOpening> openings = wallData.openings;
 
+            // Determine the material for this wall
+            Material wallMat = wallData.customMaterial != null ? wallData.customMaterial : defaultWallMaterial;
+
+            // Ensure the material is in the dictionary
+            if (!wallSubmeshTriangles.ContainsKey(wallMat))
+            {
+                wallSubmeshTriangles[wallMat] = new List<int>();
+            }
+
             // Generate wall mesh with openings
             GenerateWallWithOpenings(
                 v0, v1, v2, v3,
                 wallDir, wallLength, wallHeight,
                 openings,
-                verticesList, uvs, submeshTriangles[2]
+                verticesList, uvs, wallSubmeshTriangles[wallMat]
             );
         }
 
         // *** Assign vertices, UVs, and submeshes ***
+        int totalSubmeshes = 2 + wallSubmeshTriangles.Count;
+        roomMesh.subMeshCount = totalSubmeshes;
+
         roomMesh.vertices = verticesList.ToArray();
         roomMesh.uv = uvs.ToArray();
-        roomMesh.subMeshCount = 3;
 
+        // Set floor and ceiling triangles
         roomMesh.SetTriangles(submeshTriangles[0], 0); // Floor
         roomMesh.SetTriangles(submeshTriangles[1], 1); // Ceiling
-        roomMesh.SetTriangles(submeshTriangles[2], 2); // Walls
+
+        // Prepare materials list
+        List<Material> meshMaterials = new List<Material>();
+        meshMaterials.Add(floorMaterial);   // Submesh 0
+        meshMaterials.Add(ceilingMaterial); // Submesh 1
+
+        // Set wall triangles and materials
+        int submeshIndex = 2;
+        foreach (var kvp in wallSubmeshTriangles)
+        {
+            Material mat = kvp.Key;
+            List<int> triangles = kvp.Value;
+            roomMesh.SetTriangles(triangles, submeshIndex);
+            meshMaterials.Add(mat);
+            submeshIndex++;
+        }
 
         roomMesh.RecalculateNormals();
         roomMesh.RecalculateBounds();
@@ -293,7 +377,7 @@ public class RoomBuilder : MonoBehaviour
         meshCollider.sharedMesh = roomMesh;
 
         // *** Assign materials ***
-        meshRenderer.sharedMaterials = new Material[] { floorMaterial, ceilingMaterial, wallMaterial };
+        meshRenderer.sharedMaterials = meshMaterials.ToArray();
     }
 
     void GenerateWallWithOpenings(

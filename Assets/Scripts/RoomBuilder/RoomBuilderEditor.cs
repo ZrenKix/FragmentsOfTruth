@@ -9,24 +9,19 @@ public class RoomBuilderEditor : Editor
     private bool showVerticesList = true;
     private SerializedProperty wallsProp;
 
-    private List<bool> wallFoldouts = new List<bool>();
-
     private void OnEnable()
     {
         roomBuilder = (RoomBuilder)target;
         wallsProp = serializedObject.FindProperty("walls");
 
-        InitializeWallFoldouts();
+        // Subscribe to Undo/Redo events
+        Undo.undoRedoPerformed += OnUndoRedoPerformed;
     }
 
-    void InitializeWallFoldouts()
+    private void OnDisable()
     {
-        wallFoldouts.Clear();
-        int numWalls = roomBuilder != null && roomBuilder.walls != null ? roomBuilder.walls.Count : 0;
-        for (int i = 0; i < numWalls; i++)
-        {
-            wallFoldouts.Add(false);
-        }
+        // Unsubscribe from Undo/Redo events
+        Undo.undoRedoPerformed -= OnUndoRedoPerformed;
     }
 
     public override void OnInspectorGUI()
@@ -57,7 +52,6 @@ public class RoomBuilderEditor : Editor
             for (int i = 0; i < roomBuilder.vertices.Count; i++)
             {
                 var vertexData = roomBuilder.vertices[i];
-                Transform vertexTransform = vertexData.transform;
 
                 EditorGUILayout.BeginHorizontal();
 
@@ -67,19 +61,34 @@ public class RoomBuilderEditor : Editor
 
                 if (newName != oldName)
                 {
-                    Undo.RecordObject(vertexTransform.gameObject, "Rename Vertex");
+                    Undo.RecordObject(roomBuilder, "Rename Vertex");
                     vertexData.name = newName;
-                    vertexTransform.gameObject.name = newName;
+
+                    // Update the name of the corresponding GameObject
+                    Transform vertexTransform = roomBuilder.transform.Find(oldName);
+                    if (vertexTransform != null)
+                    {
+                        Undo.RecordObject(vertexTransform.gameObject, "Rename Vertex GameObject");
+                        vertexTransform.name = newName;
+                    }
                 }
 
                 // Display and edit the localPosition of the vertex
-                Vector3 oldPosition = vertexTransform.localPosition;
+                Vector3 oldPosition = vertexData.localPosition;
                 Vector3 newPosition = EditorGUILayout.Vector3Field("", oldPosition);
 
                 if (newPosition != oldPosition)
                 {
-                    Undo.RecordObject(vertexTransform, "Move Vertex");
-                    vertexTransform.localPosition = newPosition;
+                    Undo.RecordObject(roomBuilder, "Move Vertex");
+                    vertexData.localPosition = newPosition;
+
+                    // Update the position of the corresponding GameObject
+                    Transform vertexTransform = roomBuilder.transform.Find(vertexData.name);
+                    if (vertexTransform != null)
+                    {
+                        vertexTransform.localPosition = newPosition;
+                    }
+
                     roomBuilder.UpdateRoom();
                     serializedObject.Update(); // Update serialized properties
                 }
@@ -87,13 +96,13 @@ public class RoomBuilderEditor : Editor
                 // Insert Vertex After
                 if (GUILayout.Button("+", GUILayout.Width(25)))
                 {
-                    Undo.RecordObject(roomBuilder, "Insert Vertex");
-                    Vector3 positionA = vertexTransform.localPosition;
-                    Vector3 positionB = roomBuilder.vertices[(i + 1) % roomBuilder.vertices.Count].transform.localPosition;
+                    Vector3 positionA = vertexData.localPosition;
+                    Vector3 positionB = roomBuilder.vertices[(i + 1) % roomBuilder.vertices.Count].localPosition;
                     Vector3 newVertexPosition = (positionA + positionB) / 2f;
                     string newVertexName = "Vertex_" + roomBuilder.vertices.Count;
+
+                    Undo.RegisterCompleteObjectUndo(roomBuilder, "Insert Vertex");
                     roomBuilder.InsertVertex(i + 1, newVertexPosition, newVertexName);
-                    InitializeWallFoldouts();
                     roomBuilder.UpdateRoom();
                     serializedObject.Update(); // Update serialized properties
                     break; // Break to avoid modifying collection during iteration
@@ -104,9 +113,8 @@ public class RoomBuilderEditor : Editor
                 {
                     if (roomBuilder.vertices.Count > 3)
                     {
-                        Undo.RecordObject(roomBuilder, "Remove Vertex");
+                        Undo.RegisterCompleteObjectUndo(roomBuilder, "Remove Vertex");
                         roomBuilder.RemoveVertex(i);
-                        InitializeWallFoldouts();
                         roomBuilder.UpdateRoom();
                         serializedObject.Update(); // Update serialized properties
                         break; // Break to avoid modifying collection during iteration
@@ -120,15 +128,6 @@ public class RoomBuilderEditor : Editor
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUI.indentLevel--;
-
-            // Note: The Add Vertex and Remove Last Vertex buttons are optional now.
-            // You can remove them or keep them based on your preference.
-        }
-
-        // Synchronize wallFoldouts with the number of walls
-        if (wallFoldouts.Count != roomBuilder.walls.Count)
-        {
-            InitializeWallFoldouts();
         }
 
         // Display wall settings
@@ -143,6 +142,7 @@ public class RoomBuilderEditor : Editor
             SerializedProperty wallProp = wallsProp.GetArrayElementAtIndex(i);
             SerializedProperty isVisibleProp = wallProp.FindPropertyRelative("isVisible");
             SerializedProperty openingsProp = wallProp.FindPropertyRelative("openings");
+            SerializedProperty customMaterialProp = wallProp.FindPropertyRelative("customMaterial");
 
             int nextIndex = (i + 1) % roomBuilder.vertices.Count;
             string vertexNameA = roomBuilder.vertices[i].name;
@@ -150,19 +150,32 @@ public class RoomBuilderEditor : Editor
 
             string wallLabel = $"Wall {i} ({vertexNameA} - {vertexNameB})";
 
-            // Ensure wallFoldouts has enough elements
-            if (wallFoldouts.Count <= i)
-            {
-                wallFoldouts.Add(false);
-            }
-
-            wallFoldouts[i] = EditorGUILayout.Foldout(wallFoldouts[i], wallLabel);
-            if (wallFoldouts[i])
+            // Use the foldout state from WallData
+            var wallData = roomBuilder.walls[i];
+            wallData.foldout = EditorGUILayout.Foldout(wallData.foldout, wallLabel);
+            if (wallData.foldout)
             {
                 EditorGUI.indentLevel++;
 
                 // Wall visibility
-                isVisibleProp.boolValue = EditorGUILayout.Toggle("Visible", isVisibleProp.boolValue);
+                EditorGUI.BeginChangeCheck();
+                bool newIsVisible = EditorGUILayout.Toggle("Visible", isVisibleProp.boolValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(roomBuilder, "Toggle Wall Visibility");
+                    isVisibleProp.boolValue = newIsVisible;
+                    roomBuilder.UpdateRoom();
+                }
+
+                // Custom Material
+                EditorGUI.BeginChangeCheck();
+                Material newMaterial = (Material)EditorGUILayout.ObjectField("Custom Material", customMaterialProp.objectReferenceValue, typeof(Material), false);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(roomBuilder, "Change Wall Material");
+                    customMaterialProp.objectReferenceValue = newMaterial;
+                    roomBuilder.UpdateRoom();
+                }
 
                 // Openings
                 SerializedProperty openingsArray = openingsProp;
@@ -182,15 +195,27 @@ public class RoomBuilderEditor : Editor
                     EditorGUILayout.LabelField($"Opening {j + 1}");
                     EditorGUI.indentLevel++;
 
-                    positionProp.floatValue = EditorGUILayout.FloatField("Position", positionProp.floatValue);
-                    widthProp.floatValue = EditorGUILayout.FloatField("Width", widthProp.floatValue);
-                    heightProp.floatValue = EditorGUILayout.FloatField("Height", heightProp.floatValue);
-                    bottomProp.floatValue = EditorGUILayout.FloatField("Bottom", bottomProp.floatValue);
+                    EditorGUI.BeginChangeCheck();
+                    float newPosition = EditorGUILayout.FloatField("Position", positionProp.floatValue);
+                    float newWidth = EditorGUILayout.FloatField("Width", widthProp.floatValue);
+                    float newHeight = EditorGUILayout.FloatField("Height", heightProp.floatValue);
+                    float newBottom = EditorGUILayout.FloatField("Bottom", bottomProp.floatValue);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        Undo.RecordObject(roomBuilder, "Modify Opening");
+                        positionProp.floatValue = newPosition;
+                        widthProp.floatValue = newWidth;
+                        heightProp.floatValue = newHeight;
+                        bottomProp.floatValue = newBottom;
+                        roomBuilder.UpdateRoom();
+                    }
 
                     // Remove opening button
                     if (GUILayout.Button("Remove Opening"))
                     {
+                        Undo.RecordObject(roomBuilder, "Remove Opening");
                         openingsArray.DeleteArrayElementAtIndex(j);
+                        roomBuilder.UpdateRoom();
                         break;
                     }
 
@@ -200,12 +225,14 @@ public class RoomBuilderEditor : Editor
                 // Add opening button
                 if (GUILayout.Button("Add Opening"))
                 {
+                    Undo.RecordObject(roomBuilder, "Add Opening");
                     openingsArray.arraySize++;
                     SerializedProperty newOpeningProp = openingsArray.GetArrayElementAtIndex(openingsCount);
                     newOpeningProp.FindPropertyRelative("position").floatValue = 1f;
                     newOpeningProp.FindPropertyRelative("width").floatValue = 1f;
                     newOpeningProp.FindPropertyRelative("height").floatValue = 1f;
                     newOpeningProp.FindPropertyRelative("bottom").floatValue = 0f;
+                    roomBuilder.UpdateRoom();
                 }
 
                 EditorGUI.indentLevel -= 2;
@@ -225,11 +252,25 @@ public class RoomBuilderEditor : Editor
 
     private void OnSceneGUI()
     {
-        EditorGUI.BeginChangeCheck();
+        // Highlight the selected vertex
+        Transform selectedTransform = Selection.activeTransform;
 
         for (int i = 0; i < roomBuilder.vertices.Count; i++)
         {
-            Transform vertexTransform = roomBuilder.vertices[i].transform;
+            var vertexData = roomBuilder.vertices[i];
+            Transform vertexTransform = roomBuilder.transform.Find(vertexData.name);
+            if (vertexTransform == null)
+                continue;
+
+            Handles.color = Color.white;
+
+            if (vertexTransform == selectedTransform)
+            {
+                Handles.color = Color.yellow; // Highlight selected vertex
+            }
+
+            EditorGUI.BeginChangeCheck();
+
             Vector3 worldPos = vertexTransform.position;
 
             // Display a position handle for each vertex
@@ -237,11 +278,25 @@ public class RoomBuilderEditor : Editor
 
             if (EditorGUI.EndChangeCheck())
             {
-                Undo.RecordObject(vertexTransform, "Move Vertex");
-                vertexTransform.position = newWorldPos;
+                Undo.RecordObject(roomBuilder, "Move Vertex");
+                Vector3 localPos = roomBuilder.transform.InverseTransformPoint(newWorldPos);
+                vertexData.localPosition = localPos;
+                vertexTransform.localPosition = localPos;
                 roomBuilder.UpdateRoom();
                 serializedObject.Update(); // Update serialized properties
             }
         }
+    }
+
+    private void OnUndoRedoPerformed()
+    {
+        if (roomBuilder == null)
+        {
+            roomBuilder = (RoomBuilder)target;
+        }
+
+        roomBuilder.ReconstructVertexTransforms();
+        roomBuilder.UpdateRoom();
+        SceneView.RepaintAll();
     }
 }
