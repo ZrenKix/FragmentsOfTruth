@@ -9,11 +9,32 @@ public class RoomBuilder : MonoBehaviour
     public Material ceilingMaterial;
     public float ceilingHeight = 1f;
 
-    [HideInInspector]
-    public List<Transform> floorVertexTransforms = new List<Transform>();
+    [System.Serializable]
+    public class VertexData
+    {
+        public string name;
+        public Transform transform;
+    }
 
-    [HideInInspector]
-    public List<bool> wallVisibility = new List<bool>();
+    public List<VertexData> vertices = new List<VertexData>();
+
+    [System.Serializable]
+    public class WallOpening
+    {
+        public float position = 1f; // Position along the wall (from 0 to wall length)
+        public float width = 1f;    // Width of the opening
+        public float height = 1f;   // Height of the opening
+        public float bottom = 0f;   // Distance from the floor to the bottom of the opening
+    }
+
+    [System.Serializable]
+    public class WallData
+    {
+        public bool isVisible = true;
+        public List<WallOpening> openings = new List<WallOpening>();
+    }
+
+    public List<WallData> walls = new List<WallData>();
 
     private MeshFilter meshFilter;
     private MeshRenderer meshRenderer;
@@ -21,7 +42,7 @@ public class RoomBuilder : MonoBehaviour
 
     void OnEnable()
     {
-        InitializeFloorVertices();
+        InitializeVertices();
         UpdateRoom();
     }
 
@@ -39,40 +60,43 @@ public class RoomBuilder : MonoBehaviour
         }
     }
 
-    void InitializeFloorVertices()
+    void InitializeVertices()
     {
         // Find existing vertex GameObjects or create new ones if none exist
-        floorVertexTransforms.Clear();
+        vertices.Clear();
         foreach (Transform child in transform)
         {
             if (child.name.StartsWith("Vertex_"))
             {
-                floorVertexTransforms.Add(child);
+                VertexData vertexData = new VertexData();
+                vertexData.name = child.name;
+                vertexData.transform = child;
+                vertices.Add(vertexData);
             }
         }
 
-        if (floorVertexTransforms.Count == 0)
+        if (vertices.Count == 0)
         {
             // Create default square room if no vertices exist
             CreateDefaultVertices();
         }
 
-        AdjustWallVisibilityList();
+        AdjustWallsList();
     }
 
-    void AdjustWallVisibilityList()
+    void AdjustWallsList()
     {
-        int numWalls = floorVertexTransforms.Count;
-        if (wallVisibility.Count < numWalls)
+        int numWalls = vertices.Count;
+        if (walls.Count < numWalls)
         {
             // Add entries
-            while (wallVisibility.Count < numWalls)
-                wallVisibility.Add(true);
+            while (walls.Count < numWalls)
+                walls.Add(new WallData());
         }
-        else if (wallVisibility.Count > numWalls)
+        else if (walls.Count > numWalls)
         {
             // Remove entries
-            wallVisibility.RemoveRange(numWalls, wallVisibility.Count - numWalls);
+            walls.RemoveRange(numWalls, walls.Count - numWalls);
         }
     }
 
@@ -89,39 +113,62 @@ public class RoomBuilder : MonoBehaviour
 
         for (int i = 0; i < defaultPositions.Length; i++)
         {
-            CreateVertex(defaultPositions[i]);
+            CreateVertex(defaultPositions[i], "Vertex_" + i);
         }
     }
 
-    public void CreateVertex(Vector3 position)
+    public void CreateVertex(Vector3 position, string name = null)
     {
-        GameObject vertexGO = new GameObject("Vertex_" + floorVertexTransforms.Count);
+        if (string.IsNullOrEmpty(name))
+        {
+            name = "Vertex_" + vertices.Count;
+        }
+        GameObject vertexGO = new GameObject(name);
         vertexGO.transform.SetParent(transform, false);
         vertexGO.transform.localPosition = position;
-        floorVertexTransforms.Add(vertexGO.transform);
 
-        AdjustWallVisibilityList();
+        VertexData vertexData = new VertexData();
+        vertexData.name = name;
+        vertexData.transform = vertexGO.transform;
+        vertices.Add(vertexData);
+
+        AdjustWallsList();
     }
 
-    public void RemoveLastVertex()
+    public void RemoveVertex(int index)
     {
-        if (floorVertexTransforms.Count > 0)
+        if (index >= 0 && index < vertices.Count)
         {
-            Transform lastVertex = floorVertexTransforms[floorVertexTransforms.Count - 1];
-            floorVertexTransforms.RemoveAt(floorVertexTransforms.Count - 1);
-            DestroyImmediate(lastVertex.gameObject);
+            Transform vertexTransform = vertices[index].transform;
+            vertices.RemoveAt(index);
+            DestroyImmediate(vertexTransform.gameObject);
 
-            AdjustWallVisibilityList();
+            AdjustWallsList();
         }
+    }
+
+    public void InsertVertex(int index, Vector3 position, string name)
+    {
+        GameObject vertexGO = new GameObject(name);
+        vertexGO.transform.SetParent(transform, false);
+        vertexGO.transform.localPosition = position;
+
+        VertexData vertexData = new VertexData();
+        vertexData.name = name;
+        vertexData.transform = vertexGO.transform;
+
+        vertices.Insert(index, vertexData);
+
+        AdjustWallsList();
     }
 
     public void UpdateRoom()
     {
         // Ensure we have at least 3 vertices to form a polygon
-        if (floorVertexTransforms.Count < 3)
+        if (vertices.Count < 3)
             return;
 
-        AdjustWallVisibilityList();
+        AdjustWallsList();
 
         // Get or add MeshFilter, MeshRenderer, and MeshCollider on this GameObject
         meshFilter = GetComponent<MeshFilter>();
@@ -138,24 +185,24 @@ public class RoomBuilder : MonoBehaviour
 
         // Get floor vertices positions
         List<Vector3> floorVertices = new List<Vector3>();
-        foreach (var vertexTransform in floorVertexTransforms)
+        foreach (var vertexData in vertices)
         {
-            floorVertices.Add(vertexTransform.localPosition);
+            floorVertices.Add(vertexData.transform.localPosition);
         }
 
         // Create the room mesh
         Mesh roomMesh = new Mesh();
         roomMesh.name = "Room Mesh";
 
-        List<Vector3> vertices = new List<Vector3>();
+        List<Vector3> verticesList = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
         List<int>[] submeshTriangles = new List<int>[3]; // 0: Floor, 1: Ceiling, 2: Walls
         for (int i = 0; i < 3; i++)
             submeshTriangles[i] = new List<int>();
 
         // *** Floor ***
-        int floorVertexOffset = vertices.Count;
-        vertices.AddRange(floorVertices);
+        int floorVertexOffset = verticesList.Count;
+        verticesList.AddRange(floorVertices);
 
         // Generate UVs for the floor
         for (int i = 0; i < floorVertices.Count; i++)
@@ -170,14 +217,14 @@ public class RoomBuilder : MonoBehaviour
         submeshTriangles[0].AddRange(floorIndices);
 
         // *** Ceiling ***
-        int ceilingVertexOffset = vertices.Count;
+        int ceilingVertexOffset = verticesList.Count;
         List<Vector3> ceilingVertices = new List<Vector3>();
         for (int i = 0; i < floorVertices.Count; i++)
         {
             Vector3 v = floorVertices[i];
             Vector3 ceilingVertex = new Vector3(v.x, v.y + ceilingHeight, v.z);
             ceilingVertices.Add(ceilingVertex);
-            vertices.Add(ceilingVertex);
+            verticesList.Add(ceilingVertex);
 
             // Generate UVs for the ceiling
             Vector2 uv = new Vector2(v.x, v.z); // Use x and z as UV coordinates
@@ -193,10 +240,11 @@ public class RoomBuilder : MonoBehaviour
         submeshTriangles[1].AddRange(ceilingIndices);
 
         // *** Walls ***
-        int wallVertexOffset = vertices.Count;
         for (int i = 0; i < floorVertices.Count; i++)
         {
-            if (!wallVisibility[i])
+            WallData wallData = walls[i];
+
+            if (!wallData.isVisible)
             {
                 continue; // Skip this wall
             }
@@ -208,33 +256,25 @@ public class RoomBuilder : MonoBehaviour
             Vector3 v2 = ceilingVertices[nextI];
             Vector3 v3 = ceilingVertices[i];
 
-            vertices.Add(v0); // index 0
-            vertices.Add(v1); // index 1
-            vertices.Add(v2); // index 2
-            vertices.Add(v3); // index 3
-
-            // Calculate wall length and height for UV mapping
+            // Calculate wall direction and length
+            Vector3 wallDir = (v1 - v0).normalized;
             float wallLength = Vector3.Distance(v0, v1);
             float wallHeight = ceilingHeight;
 
-            // Generate UVs for the wall
-            uvs.Add(new Vector2(0, 0));                // v0
-            uvs.Add(new Vector2(wallLength, 0));       // v1
-            uvs.Add(new Vector2(wallLength, wallHeight)); // v2
-            uvs.Add(new Vector2(0, wallHeight));          // v3
+            // Handle wall openings
+            List<WallOpening> openings = wallData.openings;
 
-            int baseIndex = vertices.Count - 4;
-            submeshTriangles[2].Add(baseIndex);
-            submeshTriangles[2].Add(baseIndex + 1);
-            submeshTriangles[2].Add(baseIndex + 2);
-
-            submeshTriangles[2].Add(baseIndex + 2);
-            submeshTriangles[2].Add(baseIndex + 3);
-            submeshTriangles[2].Add(baseIndex);
+            // Generate wall mesh with openings
+            GenerateWallWithOpenings(
+                v0, v1, v2, v3,
+                wallDir, wallLength, wallHeight,
+                openings,
+                verticesList, uvs, submeshTriangles[2]
+            );
         }
 
         // *** Assign vertices, UVs, and submeshes ***
-        roomMesh.vertices = vertices.ToArray();
+        roomMesh.vertices = verticesList.ToArray();
         roomMesh.uv = uvs.ToArray();
         roomMesh.subMeshCount = 3;
 
@@ -254,5 +294,176 @@ public class RoomBuilder : MonoBehaviour
 
         // *** Assign materials ***
         meshRenderer.sharedMaterials = new Material[] { floorMaterial, ceilingMaterial, wallMaterial };
+    }
+
+    void GenerateWallWithOpenings(
+        Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
+        Vector3 wallDir, float wallLength, float wallHeight,
+        List<WallOpening> openings,
+        List<Vector3> verticesList, List<Vector2> uvs, List<int> triangles)
+    {
+        // Define the wall segments between openings
+        float currentPos = 0f;
+        float currentU = 0f; // Cumulative U coordinate for UV mapping
+
+        // Sort openings by position
+        openings.Sort((a, b) => a.position.CompareTo(b.position));
+
+        foreach (var opening in openings)
+        {
+            // Opening constraints
+            float openingStart = Mathf.Max(0, opening.position);
+            float openingEnd = Mathf.Min(wallLength, opening.position + opening.width);
+
+            // Add wall segment before opening
+            if (openingStart > currentPos)
+            {
+                AddWallSegment(
+                    v0, wallDir, currentPos, openingStart,
+                    wallHeight, currentU, verticesList, uvs, triangles
+                );
+                // Update currentU
+                currentU += openingStart - currentPos;
+            }
+
+            // Add opening edges (sides, top, bottom)
+            AddOpeningVertices(
+                v0, wallDir, openingStart, openingEnd, opening.bottom, opening.height,
+                wallHeight, currentU, verticesList, uvs, triangles
+            );
+
+            // Update currentPos and currentU
+            currentPos = openingEnd;
+            currentU += openingEnd - openingStart;
+        }
+
+        // Add remaining wall segment after last opening
+        if (currentPos < wallLength)
+        {
+            AddWallSegment(
+                v0, wallDir, currentPos, wallLength,
+                wallHeight, currentU, verticesList, uvs, triangles
+            );
+            // Update currentU
+            currentU += wallLength - currentPos;
+        }
+    }
+
+    void AddWallSegment(
+        Vector3 wallStart, Vector3 wallDir,
+        float start, float end, float wallHeight, float startU,
+        List<Vector3> verticesList, List<Vector2> uvs, List<int> triangles)
+    {
+        Vector3 startBottom = wallStart + wallDir * start;
+        Vector3 endBottom = wallStart + wallDir * end;
+        Vector3 startTop = startBottom + Vector3.up * wallHeight;
+        Vector3 endTop = endBottom + Vector3.up * wallHeight;
+
+        int baseIndex = verticesList.Count;
+
+        verticesList.Add(startBottom); // index 0
+        verticesList.Add(endBottom);   // index 1
+        verticesList.Add(endTop);      // index 2
+        verticesList.Add(startTop);    // index 3
+
+        // UVs
+        float segmentLength = end - start;
+        float endU = startU + segmentLength;
+
+        uvs.Add(new Vector2(startU, 0));         // v0
+        uvs.Add(new Vector2(endU, 0));           // v1
+        uvs.Add(new Vector2(endU, wallHeight));  // v2
+        uvs.Add(new Vector2(startU, wallHeight)); // v3
+
+        // Triangles
+        triangles.Add(baseIndex);
+        triangles.Add(baseIndex + 1);
+        triangles.Add(baseIndex + 2);
+
+        triangles.Add(baseIndex + 2);
+        triangles.Add(baseIndex + 3);
+        triangles.Add(baseIndex);
+    }
+
+    void AddOpeningVertices(
+        Vector3 wallStart, Vector3 wallDir,
+        float openingStart, float openingEnd,
+        float openingBottom, float openingHeight, float wallHeight,
+        float startU,
+        List<Vector3> verticesList, List<Vector2> uvs, List<int> triangles)
+    {
+        // Left side of opening
+        Vector3 leftBottom = wallStart + wallDir * openingStart;
+        Vector3 leftTop = leftBottom + Vector3.up * wallHeight;
+
+        Vector3 leftOpeningBottom = leftBottom + Vector3.up * openingBottom;
+        Vector3 leftOpeningTop = leftOpeningBottom + Vector3.up * openingHeight;
+
+        // Right side of opening
+        Vector3 rightBottom = wallStart + wallDir * openingEnd;
+        Vector3 rightTop = rightBottom + Vector3.up * wallHeight;
+
+        Vector3 rightOpeningBottom = rightBottom + Vector3.up * openingBottom;
+        Vector3 rightOpeningTop = rightOpeningBottom + Vector3.up * openingHeight;
+
+        float openingLength = openingEnd - openingStart;
+        float endU = startU + openingLength;
+
+        // Add side walls (edges of the opening)
+        // Left side
+        AddQuad(
+            leftBottom, leftOpeningBottom, leftOpeningTop, leftTop,
+            startU, startU, wallHeight, openingBottom, openingHeight,
+            verticesList, uvs, triangles
+        );
+
+        // Right side
+        AddQuad(
+            rightBottom, rightOpeningBottom, rightOpeningTop, rightTop,
+            endU, endU, wallHeight, openingBottom, openingHeight,
+            verticesList, uvs, triangles
+        );
+
+        // Add top of opening
+        AddQuad(
+            leftOpeningTop, rightOpeningTop, rightTop, leftTop,
+            startU, endU, wallHeight, openingBottom + openingHeight, wallHeight - (openingBottom + openingHeight),
+            verticesList, uvs, triangles
+        );
+
+        // Add bottom of opening
+        AddQuad(
+            leftBottom, rightBottom, rightOpeningBottom, leftOpeningBottom,
+            startU, endU, wallHeight, 0, openingBottom,
+            verticesList, uvs, triangles
+        );
+    }
+
+    void AddQuad(
+        Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
+        float u0, float u1, float wallHeight, float vStart, float vHeight,
+        List<Vector3> verticesList, List<Vector2> uvs, List<int> triangles)
+    {
+        int baseIndex = verticesList.Count;
+
+        verticesList.Add(v0);
+        verticesList.Add(v1);
+        verticesList.Add(v2);
+        verticesList.Add(v3);
+
+        // UVs
+        uvs.Add(new Vector2(u0, vStart));
+        uvs.Add(new Vector2(u1, vStart));
+        uvs.Add(new Vector2(u1, vStart + vHeight));
+        uvs.Add(new Vector2(u0, vStart + vHeight));
+
+        // Triangles
+        triangles.Add(baseIndex);
+        triangles.Add(baseIndex + 1);
+        triangles.Add(baseIndex + 2);
+
+        triangles.Add(baseIndex + 2);
+        triangles.Add(baseIndex + 3);
+        triangles.Add(baseIndex);
     }
 }
