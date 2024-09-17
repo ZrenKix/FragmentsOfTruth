@@ -197,6 +197,15 @@ public class RoomBuilderEditor : Editor
                     roomBuilder.UpdateRoom();
                 }
 
+                // Add Connected Room Button
+                if (GUILayout.Button("Add Connected Room"))
+                {
+                    Undo.RegisterCompleteObjectUndo(roomBuilder, "Add Connected Room");
+                    roomBuilder.AddConnectedRoom(i);
+                    serializedObject.Update(); // Update serialized properties
+                    break; // Break to avoid modifying collection during iteration
+                }
+
                 // Openings
                 SerializedProperty openingsArray = openingsProp;
                 int openingsCount = openingsArray.arraySize;

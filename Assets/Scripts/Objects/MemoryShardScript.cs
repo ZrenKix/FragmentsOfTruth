@@ -28,7 +28,6 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
 
     private void Update()
     {
-        Debug.Log(m_audioSource.clip.name);
         if (!m_audioSource.isPlaying)
         {
             //Debug.Log(m_audioSource.clip.name);

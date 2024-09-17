@@ -226,6 +226,62 @@ public class RoomBuilder : MonoBehaviour
         AdjustWallsList();
     }
 
+    public void AddConnectedRoom(int wallIndex)
+    {
+        // Get the wall's vertices
+        int nextIndex = (wallIndex + 1) % vertices.Count;
+        VertexData vA = vertices[wallIndex];
+        VertexData vB = vertices[nextIndex];
+
+        // Calculate the direction along the wall and perpendicular to the wall
+        Vector3 wallDir = (vB.localPosition - vA.localPosition).normalized;
+        Vector3 perpDir = Vector3.Cross(wallDir, Vector3.up);
+
+        // Parameters for the corridor and new room
+        float corridorLength = 2f;
+        float corridorWidth = 2f;
+        float roomLength = 5f;
+        float roomWidth = 5f;
+
+        // Calculate the starting point of the corridor (midpoint of the wall)
+        Vector3 wallMidPoint = (vA.localPosition + vB.localPosition) / 2f;
+
+        // Corridor vertices (starting from the wall and extending outward)
+        Vector3 c1 = wallMidPoint - perpDir * (corridorWidth / 2f);
+        Vector3 c2 = wallMidPoint + perpDir * (corridorWidth / 2f);
+        Vector3 c3 = c2 + wallDir * corridorLength;
+        Vector3 c4 = c1 + wallDir * corridorLength;
+
+        // Room vertices
+        Vector3 r1 = c4 + wallDir * roomLength - perpDir * (roomWidth / 2f);
+        Vector3 r2 = c3 + wallDir * roomLength + perpDir * (roomWidth / 2f);
+        Vector3 r3 = r2 - wallDir * roomLength;
+        Vector3 r4 = r1 - wallDir * roomLength;
+
+        // List to hold new vertices
+        List<VertexData> newVertices = new List<VertexData>();
+
+        // Build the list of new vertices in the correct order
+        // Starting from c1, moving around the corridor and new room
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 0), c1)); // After vB
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 1), c2));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 2), c3));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 3), r2));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 4), r3));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 5), r4));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 6), r1));
+        newVertices.Add(new VertexData("Vertex_" + (vertices.Count + 7), c4));
+
+        // Insert the new vertices into the vertices list at the correct position
+        int insertIndex = nextIndex;
+        vertices.InsertRange(insertIndex, newVertices);
+
+        // Update walls
+        AdjustWallsList();
+        ReconstructVertexTransforms();
+        UpdateRoom();
+    }
+
     public void UpdateRoom()
     {
         // Ensure we have at least 3 vertices to form a polygon
@@ -276,6 +332,7 @@ public class RoomBuilder : MonoBehaviour
             uvs.Add(uv);
         }
 
+        // Note: You might need to replace this with your own triangulation method
         Triangulator floorTriangulator = new Triangulator(floorVertices);
         int[] floorIndices = floorTriangulator.Triangulate();
         submeshTriangles[0].AddRange(floorIndices);

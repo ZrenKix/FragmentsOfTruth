@@ -5,15 +5,15 @@ using UnityEngine;
 
 public class Key : MonoBehaviour, IInteractable
 {
-    [SerializeField] GameObject _door;
-
+    [SerializeField] private GameObject m_object;
+    [SerializeField] private bool m_destoryAfterInteraction;
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
-        if (_door == null) return false;
+        if (m_object == null) return false;
 
-        _door.GetComponent<Locked>().bInteractable = true;
-        Destroy(this.gameObject);
+        m_object.layer = LayerMask.NameToLayer("Interactable");
+        if (m_destoryAfterInteraction) Destroy(this.gameObject);
         return true;
     }
 }

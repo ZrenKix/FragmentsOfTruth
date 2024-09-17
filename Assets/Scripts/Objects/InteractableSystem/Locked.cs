@@ -3,31 +3,46 @@ using UnityEngine;
 
 public class Locked : MonoBehaviour, IInteractable
 {
-    public bool bInteractable = false;
+    [SerializeField] private AudioClip m_audioClip;
+    [SerializeField] private AudioSource m_audioSource;
 
-    [SerializeField] private AudioClip _audioClip;
-    [SerializeField] private AudioSource _audioSource;
+    [SerializeField] private bool m_freezePlayer = true;
+    [SerializeField] private bool m_destoryAfterClip = false;
+
+    private PlayerMovement m_playerMovement;
+
+    private void Start()
+    {
+        if (m_freezePlayer)
+        {
+            GameObject playerObject = GameObject.FindWithTag("Player");
+            if (playerObject != null)
+            {
+                m_playerMovement = playerObject.GetComponent<PlayerMovement>();
+            }
+        }
+    }
 
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
-        if (!bInteractable) return false;
+        m_audioSource.clip = null;
+        m_audioSource.PlayOneShot(m_audioClip);
 
-        Debug.Log("Opening Door");
-        _audioSource.PlayOneShot(_audioClip);
+        if (m_freezePlayer)
+        {
+            m_playerMovement.PausePlayerMovement();
+        }
+        StartCoroutine(AfterAudio());
+        gameObject.layer = LayerMask.NameToLayer("Default");
 
-        // Start a coroutine to destroy the object after the audio clip finishes
-        StartCoroutine(DestroyAfterAudio());
-
-        return bInteractable;
+        return true;
     }
 
-    private IEnumerator DestroyAfterAudio()
+    private IEnumerator AfterAudio()
     {
-        // Wait for the audio clip duration
-        yield return new WaitForSeconds(_audioClip.length);
-
-        // Destroy the object
-        Destroy(this.gameObject);
+        yield return new WaitForSeconds(m_audioClip.length);
+        if (m_freezePlayer) m_playerMovement.ResumePlayerMovement();
+        if (m_destoryAfterClip) Destroy(gameObject);
     }
 }

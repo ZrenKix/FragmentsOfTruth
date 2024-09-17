@@ -13,19 +13,27 @@ public class Interactor : MonoBehaviour
 
     private void Update()
     {
-        _numFound = Physics.OverlapSphereNonAlloc(_interactionPoint.position, _interactionPointRadius, _colliders, _interactableMask);
+        _numFound = Physics.OverlapSphereNonAlloc(
+            _interactionPoint.position,
+            _interactionPointRadius,
+            _colliders,
+            _interactableMask
+        );
 
-        if (_numFound > 0)
+        if (_numFound > 0 && Input.GetKeyDown(KeyCode.E))
         {
-            var interactable = _colliders[0].GetComponent<IInteractable>();
+            // Optionally, you can find the closest collider or interact with all of them
+            Collider collider = _colliders[0]; // You can modify this to select a specific collider
 
-            if (interactable != null && Input.GetKeyDown(KeyCode.E))
+            // Retrieve all IInteractable components on the collider's GameObject
+            IInteractable[] interactables = collider.GetComponents<IInteractable>();
+            foreach (IInteractable interactable in interactables)
             {
+                // Call Interact on each interactable component
                 interactable.Interact(this);
             }
         }
     }
-
 
     private void OnDrawGizmos()
     {
