@@ -625,4 +625,90 @@ public class RoomBuilder : MonoBehaviour
         triangles.Add(baseIndex + 3);
         triangles.Add(baseIndex);
     }
+
+    /// <summary>
+    /// Check if a given GameObject is inside the room.
+    /// </summary>
+    /// <param name="gameObject">The GameObject to check.</param>
+    /// <returns>True if the GameObject is inside the room, false otherwise.</returns>
+    public bool IsObjectInsideRoom(GameObject gameObject)
+    {
+        // Get the object's world position
+        Vector3 objectPosition = gameObject.transform.position;
+        Vector2 objectPos2D = new Vector2(objectPosition.x, objectPosition.z);
+        Debug.Log($"Checking if object '{gameObject.name}' at world position {objectPosition} is inside the room.");
+
+        // Get the room's floor vertices in world space (converted from local space)
+        List<Vector2> floorVertices2D = new List<Vector2>();
+        foreach (var vertexData in vertices)
+        {
+            // Convert the local vertex position to world position
+            Vector3 worldPosition = transform.TransformPoint(vertexData.localPosition);
+            Vector2 vertex2D = new Vector2(worldPosition.x, worldPosition.z);
+            floorVertices2D.Add(vertex2D);
+            Debug.Log($"Room Vertex (World Space): {vertex2D}");
+        }
+
+        // Check if the object's 2D position is inside the polygon formed by the floor vertices
+        bool isInPolygon = IsPointInPolygon(objectPos2D, floorVertices2D);
+        Debug.Log($"Is the object's 2D position {objectPos2D} inside the polygon: {isInPolygon}");
+
+        if (!isInPolygon)
+        {
+            Debug.Log("The object is outside the room in the XZ plane.");
+            return false;
+        }
+
+        // Check if the object's Y position is within the room's height (floor and ceiling bounds in world space)
+        float floorY = transform.position.y; // Get the world Y position of the room's floor (assuming floor is at room's Y position)
+        float ceilingY = floorY + ceilingHeight; // The ceiling height is added to the floor's Y world position
+
+        Debug.Log($"Object Y position: {objectPosition.y}, Room height bounds (world space): [{floorY}, {ceilingY}]");
+
+        if (objectPosition.y < floorY || objectPosition.y > ceilingY)
+        {
+            Debug.Log("The object is outside the room in the Y axis.");
+            return false;
+        }
+
+        Debug.Log("The object is inside the room.");
+        return true;
+    }
+
+    /// <summary>
+    /// Determine if a point is inside a polygon using the ray-casting method.
+    /// </summary>
+    /// <param name="point">The point to check.</param>
+    /// <param name="polygon">The polygon vertices in world space.</param>
+    /// <returns>True if the point is inside the polygon, false otherwise.</returns>
+    private bool IsPointInPolygon(Vector2 point, List<Vector2> polygon)
+    {
+        int numVertices = polygon.Count;
+        bool isInside = false;
+
+        Debug.Log($"Checking if point {point} is inside polygon with {numVertices} vertices.");
+
+        for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
+        {
+            Vector2 vi = polygon[i];
+            Vector2 vj = polygon[j];
+
+            // Log the edges being checked
+            Debug.Log($"Checking edge from {vi} to {vj}");
+
+            // Check if the point is between the y-bounds of the edge
+            bool intersect = ((vi.y > point.y) != (vj.y > point.y)) &&
+                             (point.x < (vj.x - vi.x) * (point.y - vi.y) / (vj.y - vi.y) + vi.x);
+
+            if (intersect)
+            {
+                isInside = !isInside;
+                Debug.Log($"Ray intersects with edge. Flip isInside to: {isInside}");
+            }
+        }
+
+        Debug.Log($"Final result for point {point} inside polygon: {isInside}");
+        return isInside;
+    }
+
 }
