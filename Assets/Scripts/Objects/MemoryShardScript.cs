@@ -31,7 +31,10 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
         if (!m_audioSource.isPlaying)
         {
             //Debug.Log(m_audioSource.clip.name);
-            m_audioSource.PlayOneShot(m_passiveAudioClip);
+            if (m_audioSource.isActiveAndEnabled)
+            {
+                m_audioSource.PlayOneShot(m_passiveAudioClip);
+            }
         }
     }
 
