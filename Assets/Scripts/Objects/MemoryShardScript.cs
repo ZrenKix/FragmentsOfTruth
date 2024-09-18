@@ -5,7 +5,8 @@ using UnityEngine;
 public class MemoryShardScript : MonoBehaviour, IInteractable
 {
     [Header("Audio")]
-    [SerializeField] private AudioClip m_audioClip;
+    [SerializeField] private AudioClip m_memoryAudioClip;
+    [SerializeField] private AudioClip m_passiveAudioClip;
     [SerializeField] private AudioSource m_audioSource;
     [SerializeField] private float m_resumeAudioDelay;
     private AudioManager m_audioManager;
@@ -22,18 +23,28 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
         {
             m_playerMovement = playerObject.GetComponent<PlayerMovement>();
         }
+        m_audioSource.PlayOneShot(m_passiveAudioClip);
+    }
+
+    private void Update()
+    {
+        if (!m_audioSource.isPlaying)
+        {
+            //Debug.Log(m_audioSource.clip.name);
+            m_audioSource.PlayOneShot(m_passiveAudioClip);
+        }
     }
 
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
-        if (m_audioSource.isPlaying)
+        if (m_audioSource.clip.name.Equals(m_memoryAudioClip.name))
         {
-            Debug.Log(gameObject.name + ": is already playing audio clip");
+            Debug.Log(gameObject.name + ": is already playing memory clip");
             return false;
         }
 
-        m_audioSource.PlayOneShot(m_audioClip);
+        m_audioSource.PlayOneShot(m_memoryAudioClip);
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
 
@@ -45,7 +56,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
 
     private IEnumerator ResumeAudioAfterMemory()
     {
-        yield return new WaitForSeconds(m_audioClip.length + m_resumeAudioDelay);
+        yield return new WaitForSeconds(m_memoryAudioClip.length + m_resumeAudioDelay);
         m_playerMovement.ResumePlayerMovement();
         m_audioManager.ResumeAllAudioSources();
     }
