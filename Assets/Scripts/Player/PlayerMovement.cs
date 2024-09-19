@@ -63,6 +63,11 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
+    public bool IsMoving()
+    {
+        return Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0;
+    }
+
     internal void PausePlayerMovement()
     {
         pausedMovement = true;
@@ -84,5 +89,4 @@ public class PlayerMovement : MonoBehaviour
         m_FootstepSounds[n] = m_FootstepSounds[0];
         m_FootstepSounds[0] = m_AudioSource.clip;
     }
-
 }
