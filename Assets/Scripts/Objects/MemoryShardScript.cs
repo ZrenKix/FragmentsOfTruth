@@ -23,19 +23,11 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
         {
             m_playerMovement = playerObject.GetComponent<PlayerMovement>();
         }
-        m_audioSource.PlayOneShot(m_passiveAudioClip);
     }
 
-    private void Update()
+    private void Awake()
     {
-        if (!m_audioSource.isPlaying)
-        {
-            //Debug.Log(m_audioSource.clip.name);
-            if (m_audioSource.isActiveAndEnabled)
-            {
-                m_audioSource.PlayOneShot(m_passiveAudioClip);
-            }
-        }
+        m_audioSource.clip = m_passiveAudioClip;
     }
 
     public string InteractionPrompt { get; }
@@ -47,7 +39,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
             return false;
         }
 
-        m_audioSource.PlayOneShot(m_memoryAudioClip);
+        m_audioSource.clip = m_memoryAudioClip;
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
 
@@ -60,6 +52,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     private IEnumerator ResumeAudioAfterMemory()
     {
         yield return new WaitForSeconds(m_memoryAudioClip.length + m_resumeAudioDelay);
+        m_audioSource.clip = m_passiveAudioClip;
         m_playerMovement.ResumePlayerMovement();
         m_audioManager.ResumeAllAudioSources();
     }
