@@ -636,7 +636,7 @@ public class RoomBuilder : MonoBehaviour
         // Get the object's world position
         Vector3 objectPosition = gameObject.transform.position;
         Vector2 objectPos2D = new Vector2(objectPosition.x, objectPosition.z);
-        Debug.Log($"Checking if object '{gameObject.name}' at world position {objectPosition} is inside the room.");
+        //Debug.Log($"Checking if object '{gameObject.name}' at world position {objectPosition} is inside the room.");
 
         // Get the room's floor vertices in world space (converted from local space)
         List<Vector2> floorVertices2D = new List<Vector2>();
@@ -646,16 +646,16 @@ public class RoomBuilder : MonoBehaviour
             Vector3 worldPosition = transform.TransformPoint(vertexData.localPosition);
             Vector2 vertex2D = new Vector2(worldPosition.x, worldPosition.z);
             floorVertices2D.Add(vertex2D);
-            Debug.Log($"Room Vertex (World Space): {vertex2D}");
+            //Debug.Log($"Room Vertex (World Space): {vertex2D}");
         }
 
         // Check if the object's 2D position is inside the polygon formed by the floor vertices
         bool isInPolygon = IsPointInPolygon(objectPos2D, floorVertices2D);
-        Debug.Log($"Is the object's 2D position {objectPos2D} inside the polygon: {isInPolygon}");
+        //Debug.Log($"Is the object's 2D position {objectPos2D} inside the polygon: {isInPolygon}");
 
         if (!isInPolygon)
         {
-            Debug.Log("The object is outside the room in the XZ plane.");
+            //Debug.Log("The object is outside the room in the XZ plane.");
             return false;
         }
 
@@ -663,15 +663,15 @@ public class RoomBuilder : MonoBehaviour
         float floorY = transform.position.y; // Get the world Y position of the room's floor (assuming floor is at room's Y position)
         float ceilingY = floorY + ceilingHeight; // The ceiling height is added to the floor's Y world position
 
-        Debug.Log($"Object Y position: {objectPosition.y}, Room height bounds (world space): [{floorY}, {ceilingY}]");
+        //Debug.Log($"Object Y position: {objectPosition.y}, Room height bounds (world space): [{floorY}, {ceilingY}]");
 
         if (objectPosition.y < floorY || objectPosition.y > ceilingY)
         {
-            Debug.Log("The object is outside the room in the Y axis.");
+            //Debug.Log("The object is outside the room in the Y axis.");
             return false;
         }
 
-        Debug.Log("The object is inside the room.");
+        //Debug.Log("The object is inside the room.");
         return true;
     }
 
@@ -686,7 +686,7 @@ public class RoomBuilder : MonoBehaviour
         int numVertices = polygon.Count;
         bool isInside = false;
 
-        Debug.Log($"Checking if point {point} is inside polygon with {numVertices} vertices.");
+        //Debug.Log($"Checking if point {point} is inside polygon with {numVertices} vertices.");
 
         for (int i = 0, j = numVertices - 1; i < numVertices; j = i++)
         {
@@ -694,7 +694,7 @@ public class RoomBuilder : MonoBehaviour
             Vector2 vj = polygon[j];
 
             // Log the edges being checked
-            Debug.Log($"Checking edge from {vi} to {vj}");
+            //Debug.Log($"Checking edge from {vi} to {vj}");
 
             // Check if the point is between the y-bounds of the edge
             bool intersect = ((vi.y > point.y) != (vj.y > point.y)) &&
@@ -703,11 +703,11 @@ public class RoomBuilder : MonoBehaviour
             if (intersect)
             {
                 isInside = !isInside;
-                Debug.Log($"Ray intersects with edge. Flip isInside to: {isInside}");
+                //Debug.Log($"Ray intersects with edge. Flip isInside to: {isInside}");
             }
         }
 
-        Debug.Log($"Final result for point {point} inside polygon: {isInside}");
+        //Debug.Log($"Final result for point {point} inside polygon: {isInside}");
         return isInside;
     }
 
