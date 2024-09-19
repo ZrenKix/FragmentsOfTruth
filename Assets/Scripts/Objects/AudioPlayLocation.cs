@@ -7,11 +7,12 @@ public class AudioPlayLocation : MonoBehaviour
     [SerializeField] private RoomBuilder[] m_locations;   
     [SerializeField] private AudioSource m_audioSource;
     [SerializeField] private float m_fadeDuration;
-    [SerializeField] private float m_endVolume;
+    private float m_endVolume;
     private GameObject player;                              
 
     private void Start()
     {
+        m_endVolume = m_audioSource.volume;
         // Initialize the AudioSource if not assigned in the Inspector
         if (m_audioSource == null)
         {
