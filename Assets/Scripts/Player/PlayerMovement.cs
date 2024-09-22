@@ -56,7 +56,7 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+        rb.MovePosition(rb.position + movement * (moveSpeed * Time.fixedDeltaTime));
         if (movement != Vector3.zero && !m_AudioSource.isPlaying)
         {
             PlayFootStepAudio();

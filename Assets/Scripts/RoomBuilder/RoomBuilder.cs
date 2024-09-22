@@ -186,7 +186,9 @@ public class RoomBuilder : MonoBehaviour
 
         // Create a corresponding GameObject
         GameObject vertexGO = new GameObject(name);
+        #if UNITY_EDITOR
         Undo.RegisterCreatedObjectUndo(vertexGO, "Create Vertex");
+        #endif
         vertexGO.transform.SetParent(transform, false);
         vertexGO.transform.localPosition = position;
 
@@ -205,7 +207,9 @@ public class RoomBuilder : MonoBehaviour
             Transform child = transform.Find(vertexData.name);
             if (child != null)
             {
+                #if UNITY_EDITOR
                 Undo.DestroyObjectImmediate(child.gameObject);
+                #endif
             }
 
             AdjustWallsList();
@@ -219,7 +223,9 @@ public class RoomBuilder : MonoBehaviour
 
         // Create a corresponding GameObject
         GameObject vertexGO = new GameObject(name);
+        #if UNITY_EDITOR
         Undo.RegisterCreatedObjectUndo(vertexGO, "Insert Vertex");
+        #endif
         vertexGO.transform.SetParent(transform, false);
         vertexGO.transform.localPosition = position;
 
