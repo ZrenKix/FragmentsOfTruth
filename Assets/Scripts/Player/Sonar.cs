@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEngine.UI.Image;
 
 public class Sonar : MonoBehaviour
 {
@@ -9,6 +8,12 @@ public class Sonar : MonoBehaviour
     [SerializeField] private AudioSource m_audioSource;
 
     [SerializeField] private float m_rayMaxLength = 10f;
+    [SerializeField] private float m_minPingInterval = 0.2f;  // Minimum time between pings
+    [SerializeField] private float m_maxPingInterval = 2f;    // Maximum time between pings
+
+    [SerializeField] private AnimationCurve pingIntervalCurve; // Customizable curve in the editor
+
+    private float m_nextPingTime = 0f;  // Time when the next ping will occur
 
     private void Start()
     {
@@ -27,17 +32,32 @@ public class Sonar : MonoBehaviour
             IInteractable interactable = hit.collider.GetComponent<IInteractable>();
             if (interactable != null)
             {
+                // Normalize the distance between 0 (far) and 1 (close)
+                float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance);
 
-                float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance); // Normalizes the distance
-                m_audioSource.pitch = Mathf.Lerp(0, 3, normalizedDistance);  // Maps the normalized value to pitch range 0-3
+                // Evaluate the ping interval from the animation curve
+                float curveValue = pingIntervalCurve.Evaluate(normalizedDistance);
 
-                m_audioSource.Play();
+                // Use the curve value to control the ping interval
+                float pingInterval = Mathf.Lerp(m_maxPingInterval, m_minPingInterval, curveValue);
+
+                // Check if it's time to play the next ping sound
+                if (Time.time >= m_nextPingTime)
+                {
+                    m_audioSource.PlayOneShot(m_audioClip);  // Play the ping sound
+                    m_nextPingTime = Time.time + pingInterval;  // Set the next time the ping sound should play
+                }
 
                 Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.green);
             }
             else
             {
+                m_audioSource.Stop();  // Stop the audio if no interactable is hit
             }
+        }
+        else
+        {
+            m_audioSource.Stop();  // Stop the audio if no hit is detected
         }
     }
 }
