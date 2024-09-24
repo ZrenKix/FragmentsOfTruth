@@ -6,7 +6,7 @@ public class WallCollisionCheck : MonoBehaviour
 {
     [Header("Audio")]
     [SerializeField] private AudioSource m_audioSource;   // Reference to the audio source
-    [SerializeField] private AudioClip m_collisionAudioClip; // Audio clip to play on collision
+    [SerializeField] private AudioClip[] m_collisionAudioClip; // Audio clip to play on collision
     [SerializeField] private PlayerMovement m_playerMovement; // Reference to the player's movement script
 
     private bool m_isColliding = false; // To track if the player is stuck
@@ -18,7 +18,7 @@ public class WallCollisionCheck : MonoBehaviour
         // If the player is colliding with a wall and is moving, start looping the collision audio
         if (m_isColliding && m_playerMovement.IsMoving() && !m_audioSource.isPlaying)
         {
-            m_audioSource.clip = m_collisionAudioClip;
+            //m_audioSource.clip = m_collisionAudioClip;
             m_audioSource.loop = true;  // Ensure the audio loops while stuck
             m_audioSource.Play();       // Start playing the collision sound
         }
@@ -58,9 +58,22 @@ public class WallCollisionCheck : MonoBehaviour
             if (collisionAngle > collisionAngleThreshold && m_playerMovement.IsMoving())
             {
                 m_isColliding = true;
+                if(!m_audioSource.isPlaying) PlayWallHitAudio();
                 return;
             }
         }
         m_isColliding = false;  // If no valid wall collision is detected, reset the flag
+    }
+
+    private void PlayWallHitAudio()
+    {
+        // pick & play a random footstep sound from the array,
+        // excluding sound at index 0
+        int n = Random.Range(1, m_collisionAudioClip.Length);
+        m_audioSource.clip = m_collisionAudioClip[n];
+        m_audioSource.PlayOneShot(m_audioSource.clip);
+        // move picked sound to index 0 so it's not picked next time
+        m_collisionAudioClip[n] = m_collisionAudioClip[0];
+        m_collisionAudioClip[0] = m_audioSource.clip;
     }
 }
