@@ -51,4 +51,15 @@ public class AudioManager : MonoBehaviour
             }
         }
     }
+
+    internal void PlayVoiceLine(AudioClip clip)
+    {
+        foreach (AudioSource audioSource in m_audioSources)
+        {
+            if (audioSource != null && audioSource.tag.Equals("Speaker"))
+            {
+                audioSource.PlayOneShot(clip);
+            }
+        }
+    }
 }
