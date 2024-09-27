@@ -8,7 +8,8 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     [SerializeField] private AudioClip[] clickSounds;
     [SerializeField] private int[] correctCombination;
 
-    //[SerializeField] private AudioClip wrongSound;
+    [SerializeField] private AudioClip wrongSound;
+    [SerializeField] private AudioClip rightSound;
     [SerializeField] private AudioClip correctSound;
     [SerializeField] private AudioClip unlockSound;
 
@@ -16,10 +17,18 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     private int currentSoundIndex = 0; //For keeping track of current click-sound
     [SerializeField] private PlayerMovement playerMovement;
 
+    private bool isInteracting = false;
+
     public string InteractionPrompt { get; }
 
     private void Start() {
         SetUpCorrectCombination(); 
+    }
+
+    private void Update() {
+        if (isInteracting) {
+            ManagePlayerInput();
+        }
     }
     
     public bool Interact(Interactor interactor) {
@@ -27,13 +36,13 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         
         //Exlpain the controls for the player (A, D , Esc)
 
-        ManagePlayerInput(); //Manage player input
+        isInteracting = true;
 
         return true; //returns true if the interaction was successfull
     }
 
     private void ManagePlayerInput() {
-        while (currentStep < correctCombination.Length) {
+        if (currentStep < correctCombination.Length) {
             if (Input.GetKeyDown(KeyCode.A)) { //If player is pressing A then go down 
                 ChangeSound(-1);
             } else if (Input.GetKeyDown(KeyCode.D)){ //If player is pressing D then go up
@@ -62,15 +71,16 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         } 
 
         PlayNextSound();
-        
     }
 
     private void PlayNextSound() {
         if (currentSoundIndex == correctCombination[currentStep]) { //If it was the correct number on the code
             audioSource.PlayOneShot(correctSound); // Spela det korrekta ljudet
+            Debug.Log("playing correct");
         } else {
-            audioSource.clip = clickSounds[currentSoundIndex]; // Otherwise play the sound from the array
-            audioSource.Play();
+           //audioSource.clip = clickSounds[currentSoundIndex]; // Otherwise play the sound from the array
+            audioSource.PlayOneShot(clickSounds[currentSoundIndex]);
+            Debug.Log("clip sound: " + clickSounds[currentSoundIndex]);
         }
     }
 
@@ -78,14 +88,16 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         //Check if the chosen sound/code-number is correct
         if (currentSoundIndex == correctCombination[currentStep]) { //If the chosen sound is the same as the correct sound...
             currentStep++; // Go to the next step in the lock-combination
-            audioSource.PlayOneShot(correctSound);
+            audioSource.PlayOneShot(rightSound);
+            Debug.Log("Correct! Current step: " + currentStep);
 
             if (currentStep >= correctCombination.Length) { //Is the lock open?
                 UnlockSafe();
             }
         } else { //If it was wrong
             currentStep = 0;
-            audioSource.Play();
+            audioSource.PlayOneShot(wrongSound);
+            Debug.Log("wrong");
         }
     }
 
@@ -95,22 +107,28 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     }
 
     private void EndInteraction(){
+        isInteracting = false;
         playerMovement.enabled = true; //re-enables the players movement
         Debug.Log("interaktionen har avslutats");
     }
 
     private void SetUpCorrectCombination() {
         correctCombination = new int[3]; // Assuming the combination has 3 steps
+
+        // Ensure that the correctSound is always in the clickSounds array
+        if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
+            Array.Resize(ref clickSounds, clickSounds.Length + 1);
+            clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
+        }
+
+        // Update the combination with valid indices
         for (int i = 0; i < correctCombination.Length; i++) {
             // Randomly select a position for the correct sound in the clickSounds array
             int randomIndex = UnityEngine.Random.Range(0, clickSounds.Length);
             correctCombination[i] = randomIndex; // Store it as 0-based index
         }
 
-        // Add correctSound to the clickSounds if it's not already included
-        if (!System.Array.Exists(clickSounds, clip => clip == correctSound)) {
-            Array.Resize(ref clickSounds, clickSounds.Length + 1);
-            clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
-        }
+        // Ensure that the correctCombination contains an index for correctSound
+        correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
     }
 }
