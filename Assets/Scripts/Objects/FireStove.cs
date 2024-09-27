@@ -10,8 +10,10 @@ public class FireStove : MonoBehaviour, IInteractable
     [SerializeField] bool isBurning = true;
     [SerializeField] private AudioClip fireExtinguishAC;
     [SerializeField] private AudioSource fireStoveAS;
+    [SerializeField] private GameObject fireStoveMemory;
 
     private Bucket bucketScript;
+    private PlayerMovement playerMovementScript;
 
     public string InteractionPrompt { get; }
 
@@ -19,6 +21,7 @@ public class FireStove : MonoBehaviour, IInteractable
     void Start()
     {
         bucketScript = FindObjectOfType<Bucket>();
+        playerMovementScript = FindObjectOfType<PlayerMovement>();
         fireStoveAS.clip = fireExtinguishAC;
     }
 
@@ -52,5 +55,18 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         isBurning = false;
         fireStoveAS.Play();
+        playerMovementScript.PausePlayerMovement();
+
+        // Start a coroutine to wait for audio clip
+        StartCoroutine(DestroyASAfterClip(fireStoveAS.clip.length));
+    }
+
+    private IEnumerator DestroyASAfterClip(float clipLength)
+    {
+        //acts after the audio clip is finished
+        yield return new WaitForSeconds(clipLength);
+        Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
+        fireStoveMemory.layer = 6; //set the memorys layer from default to interactable
+        playerMovementScript.ResumePlayerMovement();
     }
 }
