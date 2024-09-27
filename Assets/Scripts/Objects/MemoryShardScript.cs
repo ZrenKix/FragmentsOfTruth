@@ -5,6 +5,7 @@ using UnityEngine;
 public class MemoryShardScript : MonoBehaviour, IInteractable
 {
     [Header("Audio")]
+    [SerializeField] private AudioClip m_buildUpAudioClip;
     [SerializeField] private AudioClip m_memoryAudioClip;
     [SerializeField] private AudioClip m_passiveAudioClip;
     [SerializeField] private AudioSource m_audioSource;
@@ -33,20 +34,27 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
-        if (m_audioSource.clip.name.Equals(m_memoryAudioClip.name))
+        if (m_audioSource.clip.name.Equals(m_memoryAudioClip.name) || m_audioSource.clip.name.Equals(m_buildUpAudioClip.name))
         {
             Debug.Log(gameObject.name + ": is already playing memory clip");
             return false;
         }
 
-        m_audioSource.clip = m_memoryAudioClip;
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
 
-        StartCoroutine(ResumeAudioAfterMemory());
+        m_audioSource.clip = m_buildUpAudioClip;
+        StartCoroutine(AfterFlashBack());
 
         Debug.Log("Playing memory");
         return true;
+    }
+
+    private IEnumerator AfterFlashBack()
+    {
+        yield return new WaitForSeconds(m_buildUpAudioClip.length);
+        m_audioSource.clip = m_memoryAudioClip;
+        StartCoroutine(ResumeAudioAfterMemory());
     }
 
     private IEnumerator ResumeAudioAfterMemory()
