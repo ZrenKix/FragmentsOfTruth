@@ -116,10 +116,10 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         correctCombination = new int[3]; // Assuming the combination has 3 steps
 
         // Ensure that the correctSound is always in the clickSounds array
-        if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
-            Array.Resize(ref clickSounds, clickSounds.Length + 1);
-            clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
-        }
+        // if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
+        //     Array.Resize(ref clickSounds, clickSounds.Length + 1);
+        //     clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
+        // }
 
         // Update the combination with valid indices
         for (int i = 0; i < correctCombination.Length; i++) {
@@ -129,6 +129,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         }
 
         // Ensure that the correctCombination contains an index for correctSound
-        correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
+        //correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
     }
 }
