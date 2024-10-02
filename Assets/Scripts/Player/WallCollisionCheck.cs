@@ -114,18 +114,18 @@ public class WallCollisionCheck : MonoBehaviour
             // }
 
             float collisionAngle = Vector3.Angle(lookDirection, -contact.normal);
-            Debug.Log($"Collision Angle: {collisionAngle}");
+            //Debug.Log($"Collision Angle: {collisionAngle}");
 
             if (collisionAngle <= collisionAngleThreshold)
             {
                 directCollisionDetected = true;
-                Debug.Log("Direct collision detected.");
+                //Debug.Log("Direct collision detected.");
                 break;
             }
             else
             {
                 scrapingDetected = true;
-                Debug.Log("Scraping detected.");
+                //Debug.Log("Scraping detected.");
             }
         }
 
