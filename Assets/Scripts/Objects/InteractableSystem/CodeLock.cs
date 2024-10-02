@@ -18,7 +18,7 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     [SerializeField] private PlayerMovement playerMovement;
 
     private bool isInteracting = false;
-
+    
     public string InteractionPrompt { get; }
 
     private void Start() {
@@ -74,13 +74,14 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     }
 
     private void PlayNextSound() {
+        Debug.Log("Playing sound at index: " + currentSoundIndex);
+
         if (currentSoundIndex == correctCombination[currentStep]) { //If it was the correct number on the code
             audioSource.PlayOneShot(correctSound); // Spela det korrekta ljudet
-            Debug.Log("playing correct");
+            Debug.Log("Playing correct sound: " + clickSounds[currentSoundIndex].name);
         } else {
            //audioSource.clip = clickSounds[currentSoundIndex]; // Otherwise play the sound from the array
             audioSource.PlayOneShot(clickSounds[currentSoundIndex]);
-            Debug.Log("clip sound: " + clickSounds[currentSoundIndex]);
         }
     }
 
@@ -89,7 +90,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         if (currentSoundIndex == correctCombination[currentStep]) { //If the chosen sound is the same as the correct sound...
             currentStep++; // Go to the next step in the lock-combination
             audioSource.PlayOneShot(rightSound);
-            Debug.Log("Correct! Current step: " + currentStep);
 
             if (currentStep >= correctCombination.Length) { //Is the lock open?
                 UnlockSafe();
@@ -97,12 +97,12 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         } else { //If it was wrong
             currentStep = 0;
             audioSource.PlayOneShot(wrongSound);
-            Debug.Log("wrong");
         }
     }
 
     private void UnlockSafe() {
         audioSource.PlayOneShot(unlockSound);
+        EndInteraction();
         Debug.Log("Kassaksåpet är upplåst");
     }
 
@@ -116,10 +116,10 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         correctCombination = new int[3]; // Assuming the combination has 3 steps
 
         // Ensure that the correctSound is always in the clickSounds array
-        if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
-            Array.Resize(ref clickSounds, clickSounds.Length + 1);
-            clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
-        }
+        // if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
+        //     Array.Resize(ref clickSounds, clickSounds.Length + 1);
+        //     clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
+        // }
 
         // Update the combination with valid indices
         for (int i = 0; i < correctCombination.Length; i++) {
@@ -129,6 +129,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
         }
 
         // Ensure that the correctCombination contains an index for correctSound
-        correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
+        //correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
     }
 }
