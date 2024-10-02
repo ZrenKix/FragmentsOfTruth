@@ -16,10 +16,9 @@ public class Key : MonoBehaviour, IInteractable
     }
     public string InteractionPrompt { get; }
 
-    public bool Interact(Interactor interactor)
+    public bool Interact(Interactor interactor) 
     {
         if (m_object == null) return false;
-
         m_object.layer = LayerMask.NameToLayer("Interactable");
         if (source != null) source.Play();
         if (m_destoryAfterInteraction) Destroy(this.gameObject);
