@@ -9,15 +9,18 @@ public class Key : MonoBehaviour, IInteractable
     [SerializeField] private bool m_destoryAfterInteraction;
     [SerializeField] private AudioClip m_clip;
     [SerializeField] private AudioSource source;
-    public string InteractionPrompt { get; }
 
+    private void Start()
+    {
+        if (!m_clip.IsUnityNull() && source != null) source.clip = m_clip;
+    }
+    public string InteractionPrompt { get; }
 
     public bool Interact(Interactor interactor) 
     {
-        source.clip = m_clip;
         if (m_object == null) return false;
         m_object.layer = LayerMask.NameToLayer("Interactable");
-        source.Play();
+        if (source != null) source.Play();
         if (m_destoryAfterInteraction) Destroy(this.gameObject);
         return true;
     }
