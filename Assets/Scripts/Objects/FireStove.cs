@@ -11,7 +11,7 @@ public class FireStove : MonoBehaviour, IInteractable
     [SerializeField] private AudioClip fireExtinguishAC;
     [SerializeField] private AudioSource fireStoveAS;
     [SerializeField] private GameObject fireStoveMemory;
-    private bool isExtinguishingFire = false; //to prevent audio source from double playing sound
+    private bool hasExtinguishedFire = false; //to prevent audio source from double playing sound
 
     private Bucket bucketScript;
     private PlayerMovement playerMovementScript;
@@ -26,15 +26,9 @@ public class FireStove : MonoBehaviour, IInteractable
         fireStoveAS.clip = fireExtinguishAC;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     public bool Interact(Interactor interactor)
     {
-        if(HasWaterBucket() == true && isExtinguishingFire ==false)
+        if(HasWaterBucket() == true && hasExtinguishedFire ==false)
         {
             PutOutFire();
             return true;
@@ -55,7 +49,7 @@ public class FireStove : MonoBehaviour, IInteractable
     private void PutOutFire()
     {
         isBurning = false;
-        isExtinguishingFire = true;
+        hasExtinguishedFire = true;
         fireStoveAS.Play();
         playerMovementScript.PausePlayerMovement();
 
@@ -67,9 +61,9 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         //acts after the audio clip is finished
         yield return new WaitForSeconds(clipLength);
-        Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
+        Destroy(this.gameObject); //remove so it wont play even with interaction
+        //Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
         fireStoveMemory.layer = 6; //set the memorys layer from default to interactable
         playerMovementScript.ResumePlayerMovement();
-        isExtinguishingFire = false;
     }
 }
