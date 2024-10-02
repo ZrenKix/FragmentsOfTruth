@@ -13,6 +13,7 @@ public class Sonar : MonoBehaviour
 
     [SerializeField] private AnimationCurve pingIntervalCurve; // Customizable curve in the editor
 
+    private int count = 0;
     private float m_nextPingTime = 0f;  // Time when the next ping will occur
 
     private void Start()
@@ -22,42 +23,59 @@ public class Sonar : MonoBehaviour
 
     private void Update()
     {
+
+        if(Input.GetKeyDown(KeyCode.P))
+        {
+            count++;
+            if (count > 9)
+            {
+                count = 0;
+            }
+            Debug.Log(count);
+        }
+
+
         Vector3 rayDirection = new Vector3(0.5f, 0.5f, 0);
         Ray ray = Camera.main.ViewportPointToRay(rayDirection);
         Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.red);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, m_rayMaxLength))
+        if(count%2 == 0)
         {
-            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-            if (interactable != null)
+
+            if (Physics.Raycast(ray, out hit, m_rayMaxLength))
             {
-                // Normalize the distance between 0 (far) and 1 (close)
-                float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance);
-
-                // Evaluate the ping interval from the animation curve
-                float curveValue = pingIntervalCurve.Evaluate(normalizedDistance);
-
-                // Use the curve value to control the ping interval
-                float pingInterval = Mathf.Lerp(m_maxPingInterval, m_minPingInterval, curveValue);
-
-                // Check if it's time to play the next ping sound
-                if (Time.time >= m_nextPingTime)
+                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                if (interactable != null)
                 {
-                    m_audioSource.PlayOneShot(m_audioClip);  // Play the ping sound
-                    m_nextPingTime = Time.time + pingInterval;  // Set the next time the ping sound should play
-                }
+                    // Normalize the distance between 0 (far) and 1 (close)
+                    float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance);
 
-                Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.green);
+                    // Evaluate the ping interval from the animation curve
+                    float curveValue = pingIntervalCurve.Evaluate(normalizedDistance);
+
+                    // Use the curve value to control the ping interval
+                    float pingInterval = Mathf.Lerp(m_maxPingInterval, m_minPingInterval, curveValue);
+
+                    // Check if it's time to play the next ping sound
+                    if (Time.time >= m_nextPingTime)
+                    {
+                        m_audioSource.PlayOneShot(m_audioClip);  // Play the ping sound
+                        m_nextPingTime = Time.time + pingInterval;  // Set the next time the ping sound should play
+                    }
+
+                    Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.green);
+                }
+                else
+                {
+                    m_audioSource.Stop();  // Stop the audio if no interactable is hit
+                }
             }
             else
             {
-                m_audioSource.Stop();  // Stop the audio if no interactable is hit
+                m_audioSource.Stop();  // Stop the audio if no hit is detected
             }
-        }
-        else
-        {
-            m_audioSource.Stop();  // Stop the audio if no hit is detected
+
         }
     }
 }
