@@ -61,7 +61,8 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         //acts after the audio clip is finished
         yield return new WaitForSeconds(clipLength);
-        Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
+        Destroy(this.gameObject); //remove so it wont play even with interaction
+        //Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
         fireStoveMemory.layer = 6; //set the memorys layer from default to interactable
         playerMovementScript.ResumePlayerMovement();
     }
