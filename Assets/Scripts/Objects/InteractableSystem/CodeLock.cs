@@ -6,6 +6,7 @@ using UnityEngine;
 using System;
 
 public class NewBehaviourScript : MonoBehaviour, IInteractable {
+    [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] clickSounds;
     [SerializeField] private int[] correctCombination;
@@ -18,7 +19,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
 
     private int currentStep = 0; 
     private int currentSoundIndex = 0; //For keeping track of current click-sound
-    [SerializeField] private PlayerMovement playerMovement;
 
     private bool isInteracting = false;
     private bool hasCompleted = false; //Variable for keeping track that the lock can only be completed once
