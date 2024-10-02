@@ -1,12 +1,16 @@
+//Nora Wennerberg, nowe9092
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 
 public class NewBehaviourScript : MonoBehaviour, IInteractable {
+    [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] clickSounds;
     [SerializeField] private int[] correctCombination;
+    [SerializeField] private GameObject safeMemory;
 
     [SerializeField] private AudioClip wrongSound;
     [SerializeField] private AudioClip rightSound;
@@ -15,9 +19,9 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
 
     private int currentStep = 0; 
     private int currentSoundIndex = 0; //For keeping track of current click-sound
-    [SerializeField] private PlayerMovement playerMovement;
 
     private bool isInteracting = false;
+    private bool hasCompleted = false; //Variable for keeping track that the lock can only be completed once
     
     public string InteractionPrompt { get; }
 
@@ -32,13 +36,15 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     }
     
     public bool Interact(Interactor interactor) {
-        playerMovement.enabled = false; //Disable the player's movement
+        if (!hasCompleted) {
+            playerMovement.enabled = false; //Disable the player's movement
         
-        //Exlpain the controls for the player (A, D , Esc)
+            //Exlpain the controls for the player (A, D , Esc)
 
-        isInteracting = true;
+            isInteracting = true;
 
-        return true; //returns true if the interaction was successfull
+            return true; //returns true if the interaction was successfull
+        } else { return false; }
     }
 
     private void ManagePlayerInput() {
@@ -103,6 +109,8 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     private void UnlockSafe() {
         audioSource.PlayOneShot(unlockSound);
         EndInteraction();
+        hasCompleted = true;
+        safeMemory.layer = 6; //Set the memorys layer from default to interactable
         Debug.Log("Kassaksåpet är upplåst");
     }
 
@@ -115,20 +123,11 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     private void SetUpCorrectCombination() {
         correctCombination = new int[3]; // Assuming the combination has 3 steps
 
-        // Ensure that the correctSound is always in the clickSounds array
-        // if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
-        //     Array.Resize(ref clickSounds, clickSounds.Length + 1);
-        //     clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
-        // }
-
         // Update the combination with valid indices
         for (int i = 0; i < correctCombination.Length; i++) {
             // Randomly select a position for the correct sound in the clickSounds array
             int randomIndex = UnityEngine.Random.Range(0, clickSounds.Length);
             correctCombination[i] = randomIndex; // Store it as 0-based index
         }
-
-        // Ensure that the correctCombination contains an index for correctSound
-        //correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
     }
 }
