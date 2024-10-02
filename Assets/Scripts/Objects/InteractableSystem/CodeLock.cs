@@ -1,5 +1,3 @@
-//Av Nora Wennerberg, nowe9092
-
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,7 +7,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] clickSounds;
     [SerializeField] private int[] correctCombination;
-    [SerializeField] private GameObject safeMemory;
 
     [SerializeField] private AudioClip wrongSound;
     [SerializeField] private AudioClip rightSound;
@@ -21,7 +18,6 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     [SerializeField] private PlayerMovement playerMovement;
 
     private bool isInteracting = false;
-    private bool isCompleted = false;
     
     public string InteractionPrompt { get; }
 
@@ -36,15 +32,13 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     }
     
     public bool Interact(Interactor interactor) {
-        if (!isCompleted) {
-            playerMovement.enabled = false; //Disable the player's movement
+        playerMovement.enabled = false; //Disable the player's movement
         
-            //Exlpain the controls for the player (A, D , Esc)
+        //Exlpain the controls for the player (A, D , Esc)
 
-            isInteracting = true;
+        isInteracting = true;
 
-            return true; //returns true if the interaction was successfull
-        } else { return false; }
+        return true; //returns true if the interaction was successfull
     }
 
     private void ManagePlayerInput() {
@@ -108,20 +102,24 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
 
     private void UnlockSafe() {
         audioSource.PlayOneShot(unlockSound);
-        isCompleted = true;
         EndInteraction();
-        safeMemory.layer = 6; // Set the memorys layer from default to interactable
         Debug.Log("Kassaksåpet är upplåst");
     }
 
     private void EndInteraction(){
         isInteracting = false;
-        playerMovement.enabled = true; // re-enables the players movement
+        playerMovement.enabled = true; //re-enables the players movement
         Debug.Log("interaktionen har avslutats");
     }
 
     private void SetUpCorrectCombination() {
         correctCombination = new int[3]; // Assuming the combination has 3 steps
+
+        // Ensure that the correctSound is always in the clickSounds array
+        // if (!Array.Exists(clickSounds, clip => clip == correctSound)) {
+        //     Array.Resize(ref clickSounds, clickSounds.Length + 1);
+        //     clickSounds[clickSounds.Length - 1] = correctSound; // Add the correctSound to the array
+        // }
 
         // Update the combination with valid indices
         for (int i = 0; i < correctCombination.Length; i++) {
@@ -129,5 +127,8 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
             int randomIndex = UnityEngine.Random.Range(0, clickSounds.Length);
             correctCombination[i] = randomIndex; // Store it as 0-based index
         }
+
+        // Ensure that the correctCombination contains an index for correctSound
+        //correctCombination[UnityEngine.Random.Range(0, correctCombination.Length)] = clickSounds.Length - 1; // Ensure correctSound is included
     }
 }
