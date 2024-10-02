@@ -23,7 +23,6 @@ public class Sink : MonoBehaviour, IInteractable
 
         //audioclip = dripping water, looping
         sinkAS.clip = waterDrippingAC;
-        sinkAS.Play();
         sinkAS.loop = true;
     }
 
@@ -36,7 +35,6 @@ public class Sink : MonoBehaviour, IInteractable
             
             //change audioclip to the one for filling the bucket with water (plays once)
             sinkAS.clip = waterRunningAC;
-            sinkAS.Play();
             sinkAS.loop = false;
 
             playerMovementScript.PausePlayerMovement();
