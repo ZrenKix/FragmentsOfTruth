@@ -1,63 +1,88 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class Sonar : MonoBehaviour
 {
-    [SerializeField] private AudioClip m_audioClip;
-    [SerializeField] private AudioSource m_audioSource;
+    [SerializeField] private AudioClip m_audioClip;           
+    [SerializeField] private AudioSource m_audioSource;       
+    [SerializeField] private float m_rayMaxLength = 10f;      
+    [SerializeField] private float m_minPingInterval = 0.2f; 
+    [SerializeField] private float m_maxPingInterval = 2f;    
+    [SerializeField] private AnimationCurve pingIntervalCurve; 
 
-    [SerializeField] private float m_rayMaxLength = 10f;
-    [SerializeField] private float m_minPingInterval = 0.2f;  // Minimum time between pings
-    [SerializeField] private float m_maxPingInterval = 2f;    // Maximum time between pings
+    private float m_nextPingTime = 0f;
+    private Camera mainCamera;
 
-    [SerializeField] private AnimationCurve pingIntervalCurve; // Customizable curve in the editor
-
-    private float m_nextPingTime = 0f;  // Time when the next ping will occur
+    public enum State { On, Off }
+    public State state;
 
     private void Start()
     {
-        m_audioSource.clip = m_audioClip;
+        mainCamera = Camera.main;
     }
 
     private void Update()
     {
-        Vector3 rayDirection = new Vector3(0.5f, 0.5f, 0);
-        Ray ray = Camera.main.ViewportPointToRay(rayDirection);
-        Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.red);
-        RaycastHit hit;
-
-        if (Physics.Raycast(ray, out hit, m_rayMaxLength))
+        // Växla sonarens tillstånd med Enter-knappen
+        if (Input.GetKeyDown(KeyCode.Return))
         {
-            IInteractable interactable = hit.collider.GetComponent<IInteractable>();
-            if (interactable != null)
+            if (state == State.On)
             {
-                // Normalize the distance between 0 (far) and 1 (close)
-                float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance);
-
-                // Evaluate the ping interval from the animation curve
-                float curveValue = pingIntervalCurve.Evaluate(normalizedDistance);
-
-                // Use the curve value to control the ping interval
-                float pingInterval = Mathf.Lerp(m_maxPingInterval, m_minPingInterval, curveValue);
-
-                // Check if it's time to play the next ping sound
-                if (Time.time >= m_nextPingTime)
-                {
-                    m_audioSource.PlayOneShot(m_audioClip);  // Play the ping sound
-                    m_nextPingTime = Time.time + pingInterval;  // Set the next time the ping sound should play
-                }
-
-                Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.green);
+                state = State.Off;
+                m_audioSource.Stop();
             }
             else
             {
-                m_audioSource.Stop();  // Stop the audio if no interactable is hit
+                state = State.On;
+                m_nextPingTime = Time.time;
             }
         }
-        else
+
+        if (state != State.On) return;
+
+        // Raycast för att upptäcka objekt framför spelaren
+        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f));
+        if (!Physics.Raycast(ray, out RaycastHit hit, m_rayMaxLength))
         {
-            m_audioSource.Stop();  // Stop the audio if no hit is detected
+            m_audioSource.Stop();
+            return;
+        }
+
+        if (hit.collider.GetComponent<IInteractable>() == null)
+        {
+            m_audioSource.Stop();
+            return;
+        }
+
+        // Beräkna ping-intervall baserat på avstånd till objektet
+        float normalizedDistance = Mathf.InverseLerp(m_rayMaxLength, 0, hit.distance);
+        float pingInterval = Mathf.Lerp(
+            m_maxPingInterval,
+            m_minPingInterval,
+            pingIntervalCurve.Evaluate(normalizedDistance)
+        );
+
+        // Spela ping-ljud om det är dags
+        if (Time.time >= m_nextPingTime)
+        {
+            m_audioSource.PlayOneShot(m_audioClip);
+            m_nextPingTime = Time.time + pingInterval;
+        }
+
+        Debug.DrawRay(ray.origin, ray.direction * m_rayMaxLength, Color.green);
+
+        // Om höger Shift är nedtryckt, spela upp förinspelat ljud baserat på objektets namn
+        if (Input.GetKeyDown(KeyCode.RightShift))
+        {
+            // Hämta AudioSource från objektet framför
+            AudioSource objectAudioSource = hit.collider.GetComponent<AudioSource>();
+            if (objectAudioSource != null)
+            {
+                objectAudioSource.Play();  // Spela upp objektets unika ljudfil
+            }
+            else
+            {
+                Debug.LogWarning("Inget AudioSource hittades på objektet: " + hit.collider.gameObject.name);
+            }
         }
     }
 }
