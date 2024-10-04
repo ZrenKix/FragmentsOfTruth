@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Interactor : MonoBehaviour
 {
+    public AudioSource audioSource;
+    public AudioClip audioClip;
+
     [SerializeField] private Transform _interactionPoint;
     [SerializeField] private float _interactionPointRadius = 0.5f;
     [SerializeField] private LayerMask _interactableMask;
@@ -30,7 +33,10 @@ public class Interactor : MonoBehaviour
             foreach (IInteractable interactable in interactables)
             {
                 // Call Interact on each interactable component
-                interactable.Interact(this);
+                if (interactable.Interact(this))
+                {
+                    audioSource.PlayOneShot(audioClip);
+                }
             }
         }
     }

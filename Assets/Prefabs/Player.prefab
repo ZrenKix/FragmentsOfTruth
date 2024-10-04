@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: 2652070028416021040}
   - component: {fileID: 1489006606207806627}
   - component: {fileID: 2221696644746401601}
-  - component: {fileID: 7992261956832291809}
   - component: {fileID: 686322737266026905}
   m_Layer: 0
   m_Name: Player
@@ -207,6 +206,7 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  state: 0
 --- !u!114 &1489006606207806627
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,25 +321,6 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
---- !u!114 &7992261956832291809
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5429945871244271303}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c617ebf6bd4b6e948b36e1625cdcbdc1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_audioSource: {fileID: 686322737266026905}
-  m_collisionAudioClip: {fileID: 8300000, guid: a54dfbb62453ccd46bf08ee31602eec8, type: 3}
-  m_scrapeAudioClip: {fileID: 8300000, guid: c3337a33722fa574daca98c37172194f, type: 3}
-  m_playerMovement: {fileID: 5767669576031192389}
-  collisionAngleThreshold: 44.6
-  groundAngleThreshold: 66.1
-  minCollisionHeight: 0.01
 --- !u!82 &686322737266026905
 AudioSource:
   m_ObjectHideFlags: 0
