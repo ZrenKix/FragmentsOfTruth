@@ -12,15 +12,18 @@ public class CodeLock : MonoBehaviour, IInteractable {
     [SerializeField] private int[] correctCombination;
     [SerializeField] private GameObject safeMemory;
 
+    [SerializeField] private AudioClip instructions;
     [SerializeField] private AudioClip wrongSound;
     [SerializeField] private AudioClip rightSound;
     [SerializeField] private AudioClip correctSound;
     [SerializeField] private AudioClip unlockSound;
+    [SerializeField] private AudioClip openVaultSound;
 
     private int currentStep = 0; 
     private int currentSoundIndex = 0; //For keeping track of current click-sound
 
     private bool isInteracting = false;
+    private bool hasPlayedInstruction = false;
     
     public string InteractionPrompt { get; }
 
@@ -38,10 +41,18 @@ public class CodeLock : MonoBehaviour, IInteractable {
         playerMovement.PausePlayerMovement(); //Disable the player's movement
     
         //Exlpain the controls for the player (A, D , Esc)
+        if (!hasPlayedInstruction){
+            ExplainControls();
+        }
 
         isInteracting = true;
 
         return true; //returns true if the interaction was successful
+    }
+
+    private void ExplainControls(){
+        audioSource.PlayOneShot(instructions);
+        hasPlayedInstruction = true;
     }
 
     private void ManagePlayerInput() {
@@ -106,6 +117,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
 
     private void UnlockSafe() {
         audioSource.PlayOneShot(unlockSound);
+        audioSource.PlayOneShot(openVaultSound);
         EndInteraction();
         safeMemory.layer = 6; //Set the memorys layer from default to interactable
         gameObject.layer = 0; //Enables the interaction
