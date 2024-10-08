@@ -8,6 +8,7 @@ public class Key : MonoBehaviour, IInteractable
     [SerializeField] private GameObject m_object;
     [SerializeField] private bool m_destoryAfterInteraction;
     [SerializeField] private AudioClip m_clip;
+    [SerializeField] private AudioClip m_pickup;
     [SerializeField] private AudioSource source;
 
     private void Start()
@@ -20,10 +21,23 @@ public class Key : MonoBehaviour, IInteractable
     {
         if (m_object == null) return false;
         m_object.layer = LayerMask.NameToLayer("Interactable");
+        source.clip = m_pickup;
+        source.loop = false;
         if (source != null) source.Play();
-        if (m_destoryAfterInteraction) Destroy(this.gameObject);
+
+        //if (m_destoryAfterInteraction) Destroy(this.gameObject);
+
+        // Start a coroutine to wait for audio clip
+        StartCoroutine(DestroyASAfterClip(source.clip.length));
+
         return true;
     }
 
-  
+    private IEnumerator DestroyASAfterClip(float clipLength)
+    {
+        //acts after the audio clip is finished
+        yield return new WaitForSeconds(clipLength);
+        Destroy(this.gameObject);
+    }
+
 }
