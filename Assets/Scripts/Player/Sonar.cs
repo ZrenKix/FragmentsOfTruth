@@ -88,6 +88,19 @@ public class Sonar : MonoBehaviour
             pingIntervalCurve.Evaluate(normalizedDistance)
         );
 
+        // Check if the object hit by the ray exists in the dictionary
+        string objectName = hit.collider.gameObject.name;
+        if (objectAudioClips.ContainsKey(objectName))
+        {
+            // Increase the pitch if the object exists in the dictionary
+            m_audioSource.pitch = 0.9f;
+        }
+        else
+        {
+            // Reset the pitch to normal if the object is not in the dictionary
+            m_audioSource.pitch = 0.6f;
+        }
+
         // Play ping sound if it's time and the sonar is active
         if (state == State.On && Time.time >= m_nextPingTime)
         {
@@ -100,8 +113,6 @@ public class Sonar : MonoBehaviour
         // When right Shift is pressed, play the audio clip associated with the object's name
         if (Input.GetKeyDown(KeyCode.RightShift))
         {
-            string objectName = hit.collider.gameObject.name;
-
             // Use the dictionary to find the corresponding clip, or fall back to the default clip
             if (objectAudioClips.TryGetValue(objectName, out AudioClip clip))
             {
