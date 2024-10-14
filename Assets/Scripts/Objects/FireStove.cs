@@ -9,6 +9,7 @@ public class FireStove : MonoBehaviour, IInteractable
 
     [SerializeField] bool isBurning = true;
     [SerializeField] private AudioClip fireExtinguishAC;
+    [SerializeField] private AudioClip fireAC;
     [SerializeField] private AudioSource fireStoveAS;
     [SerializeField] private GameObject fireStoveMemory;
     private bool hasExtinguishedFire = false; //to prevent audio source from double playing sound
@@ -23,7 +24,9 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         bucketScript = FindObjectOfType<Bucket>();
         playerMovementScript = FindObjectOfType<PlayerMovement>();
-        fireStoveAS.clip = fireExtinguishAC;
+        fireStoveAS.clip = fireAC;
+        fireStoveAS.loop = true;
+        fireStoveAS.Play();
     }
 
     public bool Interact(Interactor interactor)
@@ -50,6 +53,8 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         isBurning = false;
         hasExtinguishedFire = true;
+        fireStoveAS.clip = fireExtinguishAC;
+        fireStoveAS.loop = false;
         fireStoveAS.Play();
         playerMovementScript.PausePlayerMovement();
 

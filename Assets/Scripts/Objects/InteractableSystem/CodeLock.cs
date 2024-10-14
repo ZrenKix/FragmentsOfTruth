@@ -5,23 +5,25 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-public class NewBehaviourScript : MonoBehaviour, IInteractable {
+public class CodeLock : MonoBehaviour, IInteractable {
     [SerializeField] private PlayerMovement playerMovement;
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private AudioClip[] clickSounds;
     [SerializeField] private int[] correctCombination;
     [SerializeField] private GameObject safeMemory;
 
+    [SerializeField] private AudioClip instructions;
     [SerializeField] private AudioClip wrongSound;
     [SerializeField] private AudioClip rightSound;
     [SerializeField] private AudioClip correctSound;
     [SerializeField] private AudioClip unlockSound;
+    [SerializeField] private AudioClip openVaultSound;
 
     private int currentStep = 0; 
     private int currentSoundIndex = 0; //For keeping track of current click-sound
 
     private bool isInteracting = false;
-    private bool hasCompleted = false; //Variable for keeping track that the lock can only be completed once
+    private bool hasPlayedInstruction = false;
     
     public string InteractionPrompt { get; }
 
@@ -36,15 +38,21 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
     }
     
     public bool Interact(Interactor interactor) {
-        if (!hasCompleted) {
-            playerMovement.enabled = false; //Disable the player's movement
-        
-            //Exlpain the controls for the player (A, D , Esc)
+        playerMovement.PausePlayerMovement(); //Disable the player's movement
+    
+        //Exlpain the controls for the player (A, D , Esc)
+        if (!hasPlayedInstruction){
+            ExplainControls();
+        }
 
-            isInteracting = true;
+        isInteracting = true;
 
-            return true; //returns true if the interaction was successfull
-        } else { return false; }
+        return true; //returns true if the interaction was successful
+    }
+
+    private void ExplainControls(){
+        audioSource.PlayOneShot(instructions);
+        hasPlayedInstruction = true;
     }
 
     private void ManagePlayerInput() {
@@ -57,6 +65,7 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
 
             if (Input.GetKeyDown(KeyCode.E)){ //Press E to confirm the code-number
                 ConfirmSelection();
+                Debug.Log("Safe, E");
             }
 
             if (Input.GetKeyDown(KeyCode.Escape)){ //If esc is pressed, end interaction 
@@ -108,15 +117,16 @@ public class NewBehaviourScript : MonoBehaviour, IInteractable {
 
     private void UnlockSafe() {
         audioSource.PlayOneShot(unlockSound);
+        audioSource.PlayOneShot(openVaultSound);
         EndInteraction();
-        hasCompleted = true;
         safeMemory.layer = 6; //Set the memorys layer from default to interactable
+        gameObject.layer = 0; //Enables the interaction
         Debug.Log("Kassaksåpet är upplåst");
     }
 
     private void EndInteraction(){
         isInteracting = false;
-        playerMovement.enabled = true; //re-enables the players movement
+        playerMovement.ResumePlayerMovement(); //re-enables the players movement
         Debug.Log("interaktionen har avslutats");
     }
 
