@@ -25,19 +25,9 @@ public class Key : MonoBehaviour, IInteractable
         source.loop = false;
         if (source != null) source.Play();
 
-        //if (m_destoryAfterInteraction) Destroy(this.gameObject);
-
-        // Start a coroutine to wait for audio clip
-        StartCoroutine(DestroyASAfterClip(source.clip.length));
-
+        if (m_destoryAfterInteraction) Destroy(this.gameObject);
+        
         return true;
-    }
-
-    private IEnumerator DestroyASAfterClip(float clipLength)
-    {
-        //acts after the audio clip is finished
-        yield return new WaitForSeconds(clipLength);
-        Destroy(this.gameObject);
     }
 
 }
