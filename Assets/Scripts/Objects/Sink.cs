@@ -9,7 +9,8 @@ public class Sink : MonoBehaviour, IInteractable
 
     private Bucket bucketScript;
     private PlayerMovement playerMovementScript;
-    [SerializeField] private AudioClip sinkWaterAC;
+    [SerializeField] private AudioClip waterRunningAC;
+    [SerializeField] private AudioClip waterDrippingAC;
     [SerializeField] private AudioSource sinkAS;
 
     public string InteractionPrompt { get; }
@@ -20,7 +21,9 @@ public class Sink : MonoBehaviour, IInteractable
         bucketScript = FindObjectOfType<Bucket>();
         playerMovementScript = FindObjectOfType<PlayerMovement>();
 
-        sinkAS.clip = sinkWaterAC;
+        //audioclip = dripping water, looping
+        sinkAS.clip = waterDrippingAC;
+        sinkAS.loop = true;
     }
 
     //if player interacts with sink
@@ -29,7 +32,10 @@ public class Sink : MonoBehaviour, IInteractable
         if (bucketScript.pickedUpBucket == true)
         {
             bucketScript.hasWater = true;
-            sinkAS.Play();
+            
+            //change audioclip to the one for filling the bucket with water (plays once)
+            sinkAS.clip = waterRunningAC;
+            sinkAS.loop = false;
 
             playerMovementScript.PausePlayerMovement();
 
@@ -48,5 +54,11 @@ public class Sink : MonoBehaviour, IInteractable
         //resumes player movement after the audioClip is finished
         yield return new WaitForSeconds(clipLength);
         playerMovementScript.ResumePlayerMovement();
+
+
+        //change back audioclip to dripping water
+        sinkAS.clip = waterDrippingAC;
+        sinkAS.Play();
+        sinkAS.loop = true;
     }
 }

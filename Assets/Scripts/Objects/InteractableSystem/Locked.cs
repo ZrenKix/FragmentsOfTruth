@@ -27,7 +27,7 @@ public class Locked : MonoBehaviour, IInteractable
     public bool Interact(Interactor interactor)
     {
         m_audioSource.clip = null;
-        m_audioSource.PlayOneShot(m_audioClip);
+        m_audioSource.PlayOneShot(m_audioClip, 1);
 
         if (m_freezePlayer)
         {

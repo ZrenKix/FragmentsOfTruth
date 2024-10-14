@@ -8,6 +8,7 @@ public class Bucket : MonoBehaviour, IInteractable
 
 
     [SerializeField] private AudioClip pickUpAC;
+    [SerializeField] private AudioClip bucketAC;
     [SerializeField] private AudioSource bucketAS;
     public bool pickedUpBucket = false;
     public bool hasWater = false;
@@ -16,13 +17,19 @@ public class Bucket : MonoBehaviour, IInteractable
 
     void Start()
     {
-        bucketAS.clip = pickUpAC;
+        //audioclip is the bucket sound, for locatin the bucket
+        bucketAS.clip = bucketAC;
+        bucketAS.loop = true;
     }
 
     public bool Interact(Interactor interactor)
     {
         pickedUpBucket = true;
-        bucketAS.Play();
+
+        //change audioclip to pickup sound
+        bucketAS.clip = pickUpAC;
+        bucketAS.loop = false;
+
         // Start a coroutine to wait for audio clip
         StartCoroutine(DestroyASAfterClip(bucketAS.clip.length));
         return true;

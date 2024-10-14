@@ -34,6 +34,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
+        Debug.Log("Memory intercted");
         if (m_audioSource.clip.name.Equals(m_memoryAudioClip.name) || m_audioSource.clip.name.Equals(m_buildUpAudioClip.name))
         {
             Debug.Log(gameObject.name + ": is already playing memory clip");
