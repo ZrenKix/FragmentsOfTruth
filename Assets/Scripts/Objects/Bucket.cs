@@ -27,11 +27,13 @@ public class Bucket : MonoBehaviour, IInteractable
         pickedUpBucket = true;
 
         //change audioclip to pickup sound
-        bucketAS.clip = pickUpAC;
-        bucketAS.loop = false;
+        //bucketAS.clip = pickUpAC;
+        //bucketAS.loop = false;
 
         // Start a coroutine to wait for audio clip
-        StartCoroutine(DestroyASAfterClip(bucketAS.clip.length));
+        //StartCoroutine(DestroyASAfterClip(bucketAS.clip.length));
+
+        Destroy(this.gameObject);
         return true;
     }
 
