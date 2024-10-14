@@ -1,13 +1,9 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    [SerializeField] private AudioSource[] m_audioSources;
+    [SerializeField] internal AudioSource[] m_audioSources;
     void Start()
     {
         m_audioSources = FindObjectsOfType<AudioSource>();

@@ -1,173 +1,75 @@
 using UnityEngine;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
 public class WallCollisionCheck : MonoBehaviour
 {
-    [Header("Audio")]
-    [SerializeField] private AudioSource m_audioSource;
-    [SerializeField] private AudioClip m_collisionAudioClip;
-    [SerializeField] private AudioClip m_scrapeAudioClip;
-    [SerializeField] private PlayerMovement m_playerMovement;
+    public float scrapingThreshold = 5f;  // Velocity threshold for scraping sound
+    public float owThreshold = 10f;       // Velocity threshold for "ow" sound
 
-    private bool m_isColliding = false;
-    private bool m_isScraping = false;
-    [SerializeField] private float collisionAngleThreshold = 45f; // Increased for testing
-    [SerializeField] private float groundAngleThreshold = 10f;    // Reduced for testing
-    [SerializeField] private float minCollisionHeight = -1f;      // Reduced for testing
+    public AudioClip scrapingSound;       // Audio clip for scraping sound
+    public AudioClip owSound;             // Audio clip for "ow" sound
 
-    private bool hasPlayedOwSound = false;
+    private AudioSource audioSource;      // AudioSource component
+    private Rigidbody playerRigidbody;    // Rigidbody of the player
 
-    private void Update()
+    private bool owSoundPlayed = false;   // Flag to track if "ow" sound has been played
+
+    void Start()
     {
-        // Play "ow" sound once when a direct collision occurs
-        if (m_isColliding)
+        // Get the AudioSource component, or add one if it doesn't exist
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
         {
-            if (!hasPlayedOwSound)
-            {
-                m_audioSource.PlayOneShot(m_collisionAudioClip);
-                hasPlayedOwSound = true;
-            }
-
-            // Stop the scrape sound if it was playing
-            if (m_audioSource.isPlaying && m_audioSource.clip == m_scrapeAudioClip)
-            {
-                m_audioSource.Stop();
-            }
+            audioSource = gameObject.AddComponent<AudioSource>();
         }
-        // Play scrape sound continuously while scraping
-        else if (m_isScraping && m_playerMovement.IsMoving())
-        {
-            // Reset the flag for "ow" sound since we're no longer in direct collision
-            hasPlayedOwSound = false;
 
-            if (!m_audioSource.isPlaying || m_audioSource.clip != m_scrapeAudioClip)
-            {
-                m_audioSource.clip = m_scrapeAudioClip;
-                m_audioSource.loop = true;
-                m_audioSource.Play();
-            }
-        }
-        // Stop all sounds when not colliding
-        else
+        // Get the player's Rigidbody component from the parent
+        playerRigidbody = GetComponentInParent<Rigidbody>();
+        if (playerRigidbody == null)
         {
-            hasPlayedOwSound = false;
-
-            if (m_audioSource.isPlaying)
-            {
-                m_audioSource.Stop();
-            }
+            Debug.LogError("Player Rigidbody not found in parent objects.");
         }
     }
 
-    private void OnCollisionEnter(Collision collision)
+    void OnCollisionEnter(Collision collision)
     {
-        HandleCollision(collision);
-    }
-
-    private void OnCollisionStay(Collision collision)
-    {
-        HandleCollision(collision);
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        m_isColliding = false;
-        m_isScraping = false;
-        hasPlayedOwSound = false;
-
-        if (m_audioSource.isPlaying)
+        if (collision.gameObject.CompareTag("Plane"))
         {
-            m_audioSource.Stop();
-        }
-    }
+            Debug.Log("Player has made contact with a plane.");
 
-    private void HandleCollision(Collision collision)
-    {
-        Vector3 lookDirection = m_playerMovement.GetLookDirection();
-
-        if (lookDirection == Vector3.zero)
-        {
-            m_isColliding = false;
-            m_isScraping = false;
-            return;
-        }
-
-        bool directCollisionDetected = false;
-        bool scrapingDetected = false;
-
-        foreach (ContactPoint contact in collision.contacts)
-        {
-            // ** For testing, temporarily bypass ground and height checks **
-            // float groundCollisionAngle = Vector3.Angle(contact.normal, Vector3.up);
-            // if (groundCollisionAngle <= groundAngleThreshold)
-            // {
-            //     continue;
-            // }
-
-            // float contactHeight = contact.point.y - transform.position.y;
-            // if (contactHeight <= minCollisionHeight)
-            // {
-            //     continue;
-            // }
-
-            float collisionAngle = Vector3.Angle(lookDirection, -contact.normal);
-            //Debug.Log($"Collision Angle: {collisionAngle}");
-
-            if (collisionAngle <= collisionAngleThreshold)
+            // Check if the "ow" sound should be played
+            float speed = playerRigidbody.velocity.magnitude;
+            if (speed > owThreshold && !owSoundPlayed)
             {
-                directCollisionDetected = true;
-                //Debug.Log("Direct collision detected.");
-                break;
+                audioSource.PlayOneShot(owSound);
+                owSoundPlayed = true;
+                Debug.Log("Ow sound played.");
+            }
+            else if (speed > scrapingThreshold)
+            {
+                audioSource.PlayOneShot(scrapingSound);
+                Debug.Log("Scraping sound played.");
+            }
+
+            // Determine if contact is head-on or scraping
+            Vector3 collisionNormal = collision.contacts[0].normal;
+            float angle = Vector3.Angle(playerRigidbody.velocity, -collisionNormal);
+            if (angle < 45f)
+            {
+                Debug.Log("Head-on contact with the plane.");
             }
             else
             {
-                scrapingDetected = true;
-                //Debug.Log("Scraping detected.");
+                Debug.Log("Scraping along the plane.");
             }
-        }
-
-        if (directCollisionDetected)
-        {
-            m_isColliding = true;
-            m_isScraping = false;
-        }
-        else if (scrapingDetected)
-        {
-            m_isColliding = false;
-            m_isScraping = true;
-        }
-        else
-        {
-            m_isColliding = false;
-            m_isScraping = false;
         }
     }
 
-    private void OnDrawGizmos()
+    void OnCollisionExit(Collision collision)
     {
-#if UNITY_EDITOR
-        Vector3 playerPosition = transform.position;
-
-        Vector3 lookDirection;
-        if (Application.isPlaying)
+        if (collision.gameObject.CompareTag("Plane"))
         {
-            lookDirection = m_playerMovement.GetLookDirection();
+            owSoundPlayed = false; // Reset the "ow" sound flag
+            Debug.Log("Player no longer in contact with the plane.");
         }
-        else
-        {
-            lookDirection = transform.forward;
-        }
-        lookDirection.Normalize();
-
-        Handles.color = new Color(1, 0, 0, 0.2f);
-
-        float arcRadius = 2f;
-        float collisionAngle = collisionAngleThreshold * 2;
-
-        Handles.DrawSolidArc(playerPosition, Vector3.up, Quaternion.Euler(0, -collisionAngleThreshold, 0) * lookDirection, collisionAngle, arcRadius);
-#endif
     }
 }
