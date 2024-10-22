@@ -4,10 +4,8 @@ public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f;
     public float lookSpeed = 2f;
-    public Transform playerCamera;
     private Rigidbody rb;
     private Vector3 movement;
-    private float yaw = 0f;
     public bool pausedMovement = false;
 
     // Fotstegsljud
@@ -44,35 +42,21 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        float moveX = 0;
         float moveZ = 0;
+        float rotateY = 0;
         if (!pausedMovement)
         {
-            // Ta emot input från spelaren
-            moveX = Input.GetAxis("Horizontal");
+            // Get input from player
+            rotateY = Input.GetAxis("Horizontal");
             moveZ = Input.GetAxis("Vertical");
         }
 
-        // Uppdatera yaw baserat på musinput
-        float mouseX = Input.GetAxis("Mouse X");
-        yaw += mouseX * lookSpeed;
+        // Apply rotation to the player
+        float rotationAmount = rotateY * lookSpeed;
+        transform.Rotate(0, rotationAmount, 0);
 
-        // Applicera kamerarotation på spelaren
-        if (playerCamera != null)
-        {
-            playerCamera.localRotation = Quaternion.Euler(0, yaw, 0);
-        }
-
-        // Beräkna kamerans framåt- och högervektorer
-        Vector3 cameraForward = playerCamera.forward;
-        Vector3 cameraRight = playerCamera.right;
-        cameraForward.y = 0; // Säkerställ att riktningen är horisontell
-        cameraRight.y = 0;   // Säkerställ att riktningen är horisontell
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        // Beräkna rörelseriktning relativt kameran
-        movement = (cameraForward * moveZ + cameraRight * moveX).normalized;
+        // Calculate movement direction
+        movement = transform.forward * moveZ;
 
         // Kontrollera huvudkollision
         CheckHeadCollision();
@@ -80,10 +64,10 @@ public class PlayerMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Flytta spelaren
+        // Move the player
         rb.MovePosition(rb.position + movement * (moveSpeed * Time.fixedDeltaTime));
 
-        // Spela fotstegsljud
+        // Play footstep sounds
         if (movement != Vector3.zero && !m_AudioSource.isPlaying)
         {
             PlayFootStepAudio();
@@ -102,8 +86,8 @@ public class PlayerMovement : MonoBehaviour
 
     public Vector3 GetLookDirection()
     {
-        // Returnera kamerans framåtriktning projicerad på horisontalplanet
-        Vector3 lookDirection = playerCamera.forward;
+        // Return the player's forward direction projected onto horizontal plane
+        Vector3 lookDirection = transform.forward;
         lookDirection.y = 0;
         return lookDirection.normalized;
     }
@@ -159,16 +143,16 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Kontrollera om spelaren rör på sig
+            // Check if the player is moving
             if (movement != Vector3.zero)
             {
-                // Beräkna vinkeln mellan rörelsen och kollisionsnormalen
+                // Calculate the angle between movement and collision normal
                 Vector3 collisionNormal = collision.contacts[0].normal;
                 float angle = Vector3.Angle(movement, -collisionNormal);
 
                 if (angle > 10f && angle < 170f)
                 {
-                    // Inte en direkt frontalkollision, starta skrapljud
+                    // Not a direct frontal collision, start scraping sound
                     if (!scrapingAudioSource.isPlaying)
                     {
                         scrapingAudioSource.Play();
@@ -183,7 +167,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Kontrollera om spelaren rör på sig
+            // Check if the player is moving
             if (movement != Vector3.zero)
             {
                 if (!scrapingAudioSource.isPlaying)
@@ -194,7 +178,7 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                // Stoppa skrapljudet om spelaren har slutat röra sig
+                // Stop scraping sound if the player has stopped moving
                 if (scrapingAudioSource.isPlaying)
                 {
                     scrapingAudioSource.Stop();
@@ -208,7 +192,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Stoppa skrapljudet
+            // Stop scraping sound
             if (scrapingAudioSource.isPlaying)
             {
                 scrapingAudioSource.Stop();
@@ -217,7 +201,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Valfritt: Visualisera huvudkollisionsradien i editorn
+    // Optional: Visualize head collision radius in the editor
     private void OnDrawGizmosSelected()
     {
         if (headTransform != null)
