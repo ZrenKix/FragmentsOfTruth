@@ -3,41 +3,45 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public float lookSpeed = 2f;
+    public float rotationSpeed = 90f; // Degrees per second
     private Rigidbody rb;
-    private Vector3 movement;
+    private Vector3 movementInput;
+    private float rotationInput;
     public bool pausedMovement = false;
 
-    // Fotstegsljud
+    // Footstep sounds
     [SerializeField] private AudioSource m_AudioSource;
     [SerializeField] private AudioClip[] m_FootstepSounds;
 
-    // Kollision Audio
-    public AudioClip collisionSound;          // Tilldela ditt huvudkollisionsljud
-    private AudioSource collisionAudioSource; // AudioSource för kollisionsljud
+    // Collision Audio
+    public AudioClip collisionSound;          // Head collision sound
+    private AudioSource collisionAudioSource; // AudioSource for collision sound
     private bool collisionSoundPlayed = false;
 
-    // Skrapljud
-    public AudioClip scrapingSound;           // Tilldela ditt skrapljud
-    private AudioSource scrapingAudioSource;  // AudioSource för skrapljud
+    // Scraping sound
+    public AudioClip scrapingSound;           // Scraping sound
+    private AudioSource scrapingAudioSource;  // AudioSource for scraping sound
     private bool isScraping = false;
 
-    // Huvudkollision
-    public Transform headTransform;           // Tilldela huvudets Transform
-    public float headCollisionRadius = 0.5f;  // Radie för huvudkollisionsdetektion
+    // Head collision
+    public Transform headTransform;           // Assign the head's Transform
+    public float headCollisionRadius = 0.5f;  // Radius for head collision detection
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        // Initiera kollisionsljud
+        // Initialize collision sound
         collisionAudioSource = gameObject.AddComponent<AudioSource>();
         collisionAudioSource.clip = collisionSound;
 
-        // Initiera skrapljud
+        // Initialize scraping sound
         scrapingAudioSource = gameObject.AddComponent<AudioSource>();
         scrapingAudioSource.clip = scrapingSound;
-        scrapingAudioSource.loop = true;  // Loopar skrapljudet
+        scrapingAudioSource.loop = true;  // Loop the scraping sound
+
+        // Set Rigidbody constraints to prevent unwanted rotation
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
     }
 
     void Update()
@@ -47,41 +51,56 @@ public class PlayerMovement : MonoBehaviour
         if (!pausedMovement)
         {
             // Get input from player
-            rotateY = Input.GetAxis("Horizontal");
-            moveZ = Input.GetAxis("Vertical");
+            rotateY = Input.GetAxisRaw("Horizontal");
+            moveZ = Input.GetAxisRaw("Vertical");
         }
 
-        // Apply rotation to the player
-        float rotationAmount = rotateY * lookSpeed;
-        transform.Rotate(0, rotationAmount, 0);
+        // Store movement and rotation input for FixedUpdate
+        movementInput = new Vector3(0, 0, moveZ).normalized;
+        rotationInput = rotateY;
 
-        // Calculate movement direction
-        movement = transform.forward * moveZ;
-
-        // Kontrollera huvudkollision
+        // Check head collision
         CheckHeadCollision();
     }
 
     void FixedUpdate()
     {
-        // Move the player
-        rb.MovePosition(rb.position + movement * (moveSpeed * Time.fixedDeltaTime));
-
-        // Play footstep sounds
-        if (movement != Vector3.zero && !m_AudioSource.isPlaying)
+        // Instantaneous rotation
+        if (rotationInput != 0)
         {
-            PlayFootStepAudio();
+            float rotationAmount = rotationInput * rotationSpeed * Time.fixedDeltaTime;
+            Quaternion deltaRotation = Quaternion.Euler(0, rotationAmount, 0);
+            rb.MoveRotation(rb.rotation * deltaRotation);
+        }
+
+        // Immediate movement
+        if (movementInput.z != 0)
+        {
+            Vector3 movement = rb.transform.forward * movementInput.z * moveSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + movement);
+
+            // Play footstep sounds
+            if (!m_AudioSource.isPlaying)
+            {
+                PlayFootStepAudio();
+            }
+        }
+
+        // Stop player immediately when no input
+        if (movementInput == Vector3.zero)
+        {
+            rb.velocity = Vector3.zero;
         }
     }
 
     public bool IsMoving()
     {
-        return movement != Vector3.zero;
+        return movementInput.z != 0;
     }
 
     public Vector3 GetMovementDirection()
     {
-        return movement;
+        return movementInput;
     }
 
     public Vector3 GetLookDirection()
@@ -104,19 +123,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void PlayFootStepAudio()
     {
-        // Välj och spela ett slumpmässigt fotstegsljud från arrayen, exklusive index 0
+        // Select and play a random footstep sound from the array, excluding index 0
         int n = Random.Range(1, m_FootstepSounds.Length);
         m_AudioSource.clip = m_FootstepSounds[n];
         m_AudioSource.PlayOneShot(m_AudioSource.clip);
-        // Flytta valt ljud till index 0 så att det inte väljs nästa gång
+        // Move chosen sound to index 0 so it won't be selected next time
         m_FootstepSounds[n] = m_FootstepSounds[0];
         m_FootstepSounds[0] = m_AudioSource.clip;
     }
 
-    // Huvudkollision
+    // Head collision
     void CheckHeadCollision()
     {
-        // Använd Physics.OverlapSphere för att upptäcka kolliderare vid huvudets position
+        // Use Physics.OverlapSphere to detect colliders at the head's position
         Collider[] hitColliders = Physics.OverlapSphere(headTransform.position, headCollisionRadius);
         bool isColliding = false;
         foreach (var hitCollider in hitColliders)
@@ -138,26 +157,19 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Kroppskollision för skrapljud
+    // Body collision for scraping sound
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
             // Check if the player is moving
-            if (movement != Vector3.zero)
+            if (movementInput.z != 0)
             {
-                // Calculate the angle between movement and collision normal
-                Vector3 collisionNormal = collision.contacts[0].normal;
-                float angle = Vector3.Angle(movement, -collisionNormal);
-
-                if (angle > 10f && angle < 170f)
+                // Start scraping sound
+                if (!scrapingAudioSource.isPlaying)
                 {
-                    // Not a direct frontal collision, start scraping sound
-                    if (!scrapingAudioSource.isPlaying)
-                    {
-                        scrapingAudioSource.Play();
-                        isScraping = true;
-                    }
+                    scrapingAudioSource.Play();
+                    isScraping = true;
                 }
             }
         }
@@ -168,7 +180,7 @@ public class PlayerMovement : MonoBehaviour
         if (collision.gameObject.CompareTag("Plane"))
         {
             // Check if the player is moving
-            if (movement != Vector3.zero)
+            if (movementInput.z != 0)
             {
                 if (!scrapingAudioSource.isPlaying)
                 {
