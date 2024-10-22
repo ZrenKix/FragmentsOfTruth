@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ActivateSoundTrigger : MonoBehaviour
 {
-    private AudioSource source;
+    [SerializeField] AudioSource source;
     [SerializeField] private AudioClip clip;
 
     // Slider for volume (0 to 1) and pitch (0.5 to 3) in the Inspector
@@ -29,7 +29,6 @@ public class ActivateSoundTrigger : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        source = gameObject.GetComponent<AudioSource>();
         source.volume = volume;
         source.pitch = pitch;
     }

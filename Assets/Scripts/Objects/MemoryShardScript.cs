@@ -7,6 +7,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     [Header("Audio")]
     [SerializeField] private AudioClip m_buildUpAudioClip;
     [SerializeField] private AudioClip m_memoryAudioClip;
+    [SerializeField] private AudioClip m_afer_memoryAudioClip;
     [SerializeField] private AudioClip m_passiveAudioClip;
     [SerializeField] private AudioSource m_audioSource;
     [SerializeField] private float m_resumeAudioDelay;

@@ -4,6 +4,7 @@ using UnityEngine;
 public class Locked : MonoBehaviour, IInteractable
 {
     [SerializeField] private AudioClip m_audioClip;
+    [SerializeField] private AudioClip m_audioClip2;
     [SerializeField] private AudioSource m_audioSource;
 
     [SerializeField] private bool m_freezePlayer = true;
@@ -28,6 +29,10 @@ public class Locked : MonoBehaviour, IInteractable
     {
         m_audioSource.clip = null;
         m_audioSource.PlayOneShot(m_audioClip, 1);
+        if (!m_audioSource.isPlaying)
+        {
+            m_audioSource.PlayOneShot(m_audioClip2);
+        }
 
         if (m_freezePlayer)
         {
