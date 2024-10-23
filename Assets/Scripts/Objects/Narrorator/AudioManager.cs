@@ -32,7 +32,7 @@ public class AudioManager : MonoBehaviour
         {
             if (_audioSource != null && !_audioSource.Equals(audioSource))
             {
-                _audioSource.Pause(); ;
+                _audioSource.Pause();
             }
         }
     }

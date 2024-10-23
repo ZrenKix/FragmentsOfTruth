@@ -3,107 +3,110 @@ using UnityEngine;
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f;
-    public float lookSpeed = 2f;
-    public Transform playerCamera;
+    public float rotationSpeed = 90f; // Degrees per second
     private Rigidbody rb;
-    private Vector3 movement;
-    private float yaw = 0f;
+    private Vector3 movementInput;
+    private float rotationInput;
     public bool pausedMovement = false;
 
-    // Fotstegsljud
+    // Footstep sounds
     [SerializeField] private AudioSource m_AudioSource;
     [SerializeField] private AudioClip[] m_FootstepSounds;
 
-    // Kollision Audio
-    public AudioClip collisionSound;          // Tilldela ditt huvudkollisionsljud
-    private AudioSource collisionAudioSource; // AudioSource för kollisionsljud
+    // Collision Audio
+    public AudioClip collisionSound;          // Head collision sound
+    private AudioSource collisionAudioSource; // AudioSource for collision sound
     private bool collisionSoundPlayed = false;
 
-    // Skrapljud
-    public AudioClip scrapingSound;           // Tilldela ditt skrapljud
-    private AudioSource scrapingAudioSource;  // AudioSource för skrapljud
+    // Scraping sound
+    public AudioClip scrapingSound;           // Scraping sound
+    private AudioSource scrapingAudioSource;  // AudioSource for scraping sound
     private bool isScraping = false;
 
-    // Huvudkollision
-    public Transform headTransform;           // Tilldela huvudets Transform
-    public float headCollisionRadius = 0.5f;  // Radie för huvudkollisionsdetektion
+    // Head collision
+    public Transform headTransform;           // Assign the head's Transform
+    public float headCollisionRadius = 0.5f;  // Radius for head collision detection
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
 
-        // Initiera kollisionsljud
+        // Initialize collision sound
         collisionAudioSource = gameObject.AddComponent<AudioSource>();
         collisionAudioSource.clip = collisionSound;
 
-        // Initiera skrapljud
+        // Initialize scraping sound
         scrapingAudioSource = gameObject.AddComponent<AudioSource>();
         scrapingAudioSource.clip = scrapingSound;
-        scrapingAudioSource.loop = true;  // Loopar skrapljudet
+        scrapingAudioSource.loop = true;  // Loop the scraping sound
+
+        // Set Rigidbody constraints to prevent unwanted rotation
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
     }
 
     void Update()
     {
-        float moveX = 0;
         float moveZ = 0;
+        float rotateY = 0;
         if (!pausedMovement)
         {
-            // Ta emot input från spelaren
-            moveX = Input.GetAxis("Horizontal");
-            moveZ = Input.GetAxis("Vertical");
+            // Get input from player
+            rotateY = Input.GetAxisRaw("Horizontal");
+            moveZ = Input.GetAxisRaw("Vertical");
         }
 
-        // Uppdatera yaw baserat på musinput
-        float mouseX = Input.GetAxis("Mouse X");
-        yaw += mouseX * lookSpeed;
+        // Store movement and rotation input for FixedUpdate
+        movementInput = new Vector3(0, 0, moveZ).normalized;
+        rotationInput = rotateY;
 
-        // Applicera kamerarotation på spelaren
-        if (playerCamera != null)
-        {
-            playerCamera.localRotation = Quaternion.Euler(0, yaw, 0);
-        }
-
-        // Beräkna kamerans framåt- och högervektorer
-        Vector3 cameraForward = playerCamera.forward;
-        Vector3 cameraRight = playerCamera.right;
-        cameraForward.y = 0; // Säkerställ att riktningen är horisontell
-        cameraRight.y = 0;   // Säkerställ att riktningen är horisontell
-        cameraForward.Normalize();
-        cameraRight.Normalize();
-
-        // Beräkna rörelseriktning relativt kameran
-        movement = (cameraForward * moveZ + cameraRight * moveX).normalized;
-
-        // Kontrollera huvudkollision
+        // Check head collision
         CheckHeadCollision();
     }
 
     void FixedUpdate()
     {
-        // Flytta spelaren
-        rb.MovePosition(rb.position + movement * (moveSpeed * Time.fixedDeltaTime));
-
-        // Spela fotstegsljud
-        if (movement != Vector3.zero && !m_AudioSource.isPlaying)
+        // Instantaneous rotation
+        if (rotationInput != 0)
         {
-            PlayFootStepAudio();
+            float rotationAmount = rotationInput * rotationSpeed * Time.fixedDeltaTime;
+            Quaternion deltaRotation = Quaternion.Euler(0, rotationAmount, 0);
+            rb.MoveRotation(rb.rotation * deltaRotation);
+        }
+
+        // Immediate movement
+        if (movementInput.z != 0)
+        {
+            Vector3 movement = rb.transform.forward * movementInput.z * moveSpeed * Time.fixedDeltaTime;
+            rb.MovePosition(rb.position + movement);
+
+            // Play footstep sounds
+            if (!m_AudioSource.isPlaying)
+            {
+                PlayFootStepAudio();
+            }
+        }
+
+        // Stop player immediately when no input
+        if (movementInput == Vector3.zero)
+        {
+            rb.velocity = Vector3.zero;
         }
     }
 
     public bool IsMoving()
     {
-        return movement != Vector3.zero;
+        return movementInput.z != 0;
     }
 
     public Vector3 GetMovementDirection()
     {
-        return movement;
+        return movementInput;
     }
 
     public Vector3 GetLookDirection()
     {
-        // Returnera kamerans framåtriktning projicerad på horisontalplanet
-        Vector3 lookDirection = playerCamera.forward;
+        // Return the player's forward direction projected onto horizontal plane
+        Vector3 lookDirection = transform.forward;
         lookDirection.y = 0;
         return lookDirection.normalized;
     }
@@ -120,19 +123,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void PlayFootStepAudio()
     {
-        // Välj och spela ett slumpmässigt fotstegsljud från arrayen, exklusive index 0
+        // Select and play a random footstep sound from the array, excluding index 0
         int n = Random.Range(1, m_FootstepSounds.Length);
         m_AudioSource.clip = m_FootstepSounds[n];
         m_AudioSource.PlayOneShot(m_AudioSource.clip);
-        // Flytta valt ljud till index 0 så att det inte väljs nästa gång
+        // Move chosen sound to index 0 so it won't be selected next time
         m_FootstepSounds[n] = m_FootstepSounds[0];
         m_FootstepSounds[0] = m_AudioSource.clip;
     }
 
-    // Huvudkollision
+    // Head collision
     void CheckHeadCollision()
     {
-        // Använd Physics.OverlapSphere för att upptäcka kolliderare vid huvudets position
+        // Use Physics.OverlapSphere to detect colliders at the head's position
         Collider[] hitColliders = Physics.OverlapSphere(headTransform.position, headCollisionRadius);
         bool isColliding = false;
         foreach (var hitCollider in hitColliders)
@@ -154,26 +157,19 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Kroppskollision för skrapljud
+    // Body collision for scraping sound
     private void OnCollisionEnter(Collision collision)
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Kontrollera om spelaren rör på sig
-            if (movement != Vector3.zero)
+            // Check if the player is moving
+            if (movementInput.z != 0)
             {
-                // Beräkna vinkeln mellan rörelsen och kollisionsnormalen
-                Vector3 collisionNormal = collision.contacts[0].normal;
-                float angle = Vector3.Angle(movement, -collisionNormal);
-
-                if (angle > 10f && angle < 170f)
+                // Start scraping sound
+                if (!scrapingAudioSource.isPlaying)
                 {
-                    // Inte en direkt frontalkollision, starta skrapljud
-                    if (!scrapingAudioSource.isPlaying)
-                    {
-                        scrapingAudioSource.Play();
-                        isScraping = true;
-                    }
+                    scrapingAudioSource.Play();
+                    isScraping = true;
                 }
             }
         }
@@ -183,8 +179,8 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Kontrollera om spelaren rör på sig
-            if (movement != Vector3.zero)
+            // Check if the player is moving
+            if (movementInput.z != 0)
             {
                 if (!scrapingAudioSource.isPlaying)
                 {
@@ -194,7 +190,7 @@ public class PlayerMovement : MonoBehaviour
             }
             else
             {
-                // Stoppa skrapljudet om spelaren har slutat röra sig
+                // Stop scraping sound if the player has stopped moving
                 if (scrapingAudioSource.isPlaying)
                 {
                     scrapingAudioSource.Stop();
@@ -208,7 +204,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Plane"))
         {
-            // Stoppa skrapljudet
+            // Stop scraping sound
             if (scrapingAudioSource.isPlaying)
             {
                 scrapingAudioSource.Stop();
@@ -217,7 +213,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // Valfritt: Visualisera huvudkollisionsradien i editorn
+    // Optional: Visualize head collision radius in the editor
     private void OnDrawGizmosSelected()
     {
         if (headTransform != null)
