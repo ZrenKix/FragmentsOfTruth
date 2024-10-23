@@ -43,7 +43,6 @@ public class PlayerMovement : MonoBehaviour
         // Set Rigidbody constraints to prevent unwanted rotation
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
     }
-
     void Update()
     {
         float moveZ = 0;

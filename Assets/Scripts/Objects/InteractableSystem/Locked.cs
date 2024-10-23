@@ -41,6 +41,8 @@ public class Locked : MonoBehaviour, IInteractable
         StartCoroutine(AfterAudio());
         gameObject.layer = LayerMask.NameToLayer("Default");
 
+        LogManager.Instance.LogEvent($"{gameObject.name} opened");
+
         return true;
     }
 

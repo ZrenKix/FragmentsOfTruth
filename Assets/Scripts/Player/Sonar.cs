@@ -12,9 +12,9 @@ public class Sonar : MonoBehaviour
 {
     [SerializeField] private AudioClip m_audioClip;           // Default sonar audio clip
     [SerializeField] private AudioSource m_audioSource;
-    [SerializeField] private float m_rayMaxLength = 10f;
-    [SerializeField] private float m_minPingInterval = 0.2f;
-    [SerializeField] private float m_maxPingInterval = 2f;
+    [SerializeField] public float m_rayMaxLength = 10f;
+    [SerializeField] public float m_minPingInterval = 0.2f;
+    [SerializeField] public float m_maxPingInterval = 2f;
     [SerializeField] private AnimationCurve pingIntervalCurve;
 
     private float m_nextPingTime = 0f;
