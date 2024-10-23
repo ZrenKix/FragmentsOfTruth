@@ -26,7 +26,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
             m_playerMovement = playerObject.GetComponent<PlayerMovement>();
         }
     }
-
+    
     private void Awake()
     {
         m_audioSource.clip = m_passiveAudioClip;
@@ -35,18 +35,23 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
-        Debug.Log("Memory intercted");
+        Debug.Log("Memory interacted");
+
         if (m_audioSource.clip.name.Equals(m_memoryAudioClip.name) || m_audioSource.clip.name.Equals(m_buildUpAudioClip.name))
         {
             Debug.Log(gameObject.name + ": is already playing memory clip");
             return false;
         }
 
+        // Pause player movement and play memory audio
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
 
         m_audioSource.clip = m_buildUpAudioClip;
         StartCoroutine(AfterFlashBack());
+
+        // Notify the MemoryShardManager that a shard has been found
+        MemoryShardManager.Instance.ShardFound();
 
         Debug.Log("Playing memory");
         return true;

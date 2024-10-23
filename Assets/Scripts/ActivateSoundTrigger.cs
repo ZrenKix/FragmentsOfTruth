@@ -24,7 +24,8 @@ public class ActivateSoundTrigger : MonoBehaviour
     [Range(0.5f, 3f)]
     [SerializeField] private float maxRandomPitch = 3f;
 
-    private bool hasPlayed = false;  // To ensure the sound is played only once
+    private bool hasPlayed = false;
+    private bool insideTrigger = false;// To ensure the sound is played only once
 
     // Start is called before the first frame update
     void Start()
@@ -33,16 +34,27 @@ public class ActivateSoundTrigger : MonoBehaviour
         source.pitch = pitch;
     }
 
+    private void Update()
+    {
+        if (source.isPlaying && Input.GetKey(KeyCode.E))
+        {
+            source.Stop();
+        }
+
+    }
+
     // Trigger detection when player enters the box
     private void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player") && !hasPlayed)
         {
+           
             source.clip = clip;
             source.pitch = RandomizePitch(); // Randomize pitch
             StartCoroutine(FadeInAndPlay()); // Start fade-in and let the sound play fully
             hasPlayed = true; // Prevent the sound from being triggered again
         }
+      
     }
 
     // Fade In Method and play until the end
