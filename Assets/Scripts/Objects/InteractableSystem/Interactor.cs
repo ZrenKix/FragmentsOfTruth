@@ -7,8 +7,8 @@ public class Interactor : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip audioClip;
 
-    [SerializeField] private Transform _interactionPoint;
-    [SerializeField] private float _interactionPointRadius = 0.5f;
+    [SerializeField] public Transform _interactionPoint;
+    [SerializeField] public float _interactionPointRadius = 0.5f;
     [SerializeField] private LayerMask _interactableMask;
 
     private readonly Collider[] _colliders = new Collider[3];
