@@ -46,6 +46,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
         // Pause player movement and play memory audio
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
+       
 
         m_audioSource.clip = m_buildUpAudioClip;
         StartCoroutine(AfterFlashBack());
@@ -67,7 +68,7 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
     private IEnumerator ResumeAudioAfterMemory()
     {
         yield return new WaitForSeconds(m_memoryAudioClip.length + m_resumeAudioDelay);
-        m_audioSource.clip = m_passiveAudioClip;
+        m_audioSource.clip = null; 
         m_playerMovement.ResumePlayerMovement();
         m_audioManager.ResumeAllAudioSources();
     }
