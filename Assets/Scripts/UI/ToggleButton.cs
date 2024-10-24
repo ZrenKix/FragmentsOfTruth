@@ -9,7 +9,9 @@ public class ButtonToggle : MonoBehaviour
     public AudioSource audioSource;  // Assign an AudioSource in Inspector
     public AudioClip clip1;  // Assign AudioClip for Button1 in Inspector
     public AudioClip clip2;  // Assign AudioClip for Button2 in Inspector
-    public GameObject uiPanel; // Assign the UI panel containing the buttons
+    public AudioClip confirmClip1;  // Audio played when Button1 is selected
+    public AudioClip confirmClip2;  // Audio played when Button2 is selected
+    public GameObject uiPanel;  // Assign the UI panel containing the buttons
     public AudioMixer audioMixer;  // Assign the AudioMixer in Inspector
 
     private int currentButtonIndex = 0;  // 0 for Button1, 1 for Button2
@@ -23,19 +25,6 @@ public class ButtonToggle : MonoBehaviour
 
     void Update()
     {
-        // Show/hide UI and toggle game pause
-        if (Input.GetKeyDown(KeyCode.Escape)) // Press 'Escape' to toggle the UI
-        {
-            if (isPaused)
-            {
-                ResumeGame();
-            }
-            else
-            {
-                PauseGame();
-            }
-        }
-
         // If the UI is active, allow toggling between buttons
         if (isPaused)
         {
@@ -50,6 +39,21 @@ public class ButtonToggle : MonoBehaviour
             {
                 ToggleButton(1);
             }
+
+            // If the player presses Enter or Space to select the current button
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+            {
+                ConfirmSelection();
+            }
+        }
+    }
+
+    // Detect when the player enters the trigger
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player"))  // Make sure the collider is the player
+        {
+            PauseGame();  // Trigger the UI and pause the game
         }
     }
 
@@ -57,21 +61,21 @@ public class ButtonToggle : MonoBehaviour
     private void PauseGame()
     {
         isPaused = true;
-        uiPanel.SetActive(true); // Show the UI
-        Time.timeScale = 0f; // Freeze the game
+        uiPanel.SetActive(true);  // Show the UI
+        Time.timeScale = 0f;  // Freeze the game
 
         // Mute all other game sounds by setting the volume to -80 dB
         audioMixer.SetFloat("GameSoundsVolume", -80f);
 
-        HighlightButton(currentButtonIndex); // Highlight the current button and play audio
+        HighlightButton(currentButtonIndex);  // Highlight the current button and play audio
     }
 
     // Method to resume the game, unmute game sounds, and hide the UI
-    private void ResumeGame()
+    public void ResumeGame()
     {
         isPaused = false;
-        uiPanel.SetActive(false); // Hide the UI
-        Time.timeScale = 1f; // Resume the game
+        uiPanel.SetActive(false);  // Hide the UI
+        Time.timeScale = 1f;  // Resume the game
 
         // Unmute all other game sounds by setting the volume to 0 dB (normal volume)
         audioMixer.SetFloat("GameSoundsVolume", 0f);
@@ -104,6 +108,23 @@ public class ButtonToggle : MonoBehaviour
             button2.Select();  // Highlight Button2
             PlayAudioClip(clip2);  // Play Button2's sound
         }
+    }
+
+    // Method to confirm the player's button selection
+    private void ConfirmSelection()
+    {
+        // Play the corresponding confirm sound based on the selected button
+        if (currentButtonIndex == 0)
+        {
+            PlayAudioClip(confirmClip1);  // Play Button1's confirm sound
+        }
+        else
+        {
+            PlayAudioClip(confirmClip2);  // Play Button2's confirm sound
+        }
+
+        // Resume the game after selection
+        ResumeGame();
     }
 
     // Method to play the assigned audio clip

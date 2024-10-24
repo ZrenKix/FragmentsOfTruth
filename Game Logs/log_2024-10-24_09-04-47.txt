@@ -1,0 +1,18 @@
+SETUP CONFIGURATION:
+Player:
+Name: Player
+Move Speed: 2,4
+Rotation Speed: 50
+
+Sonar:
+Max Ray Length: 6
+Max Ping Interval: 2
+Min Ping Interval: 0,2
+
+Interactor:
+Interaction Point: InteractPoint (UnityEngine.Transform)
+Interaction Point Radius: 0,5
+
+--- GAME EVENTS ---
+time: 09:04:51, event: Frontdoor opened
+time: 09:05:13, event: Trunk opened
