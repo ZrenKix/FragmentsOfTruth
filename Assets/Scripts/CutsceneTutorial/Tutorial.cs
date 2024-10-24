@@ -41,11 +41,5 @@ public class Tutorial : MonoBehaviour {
        
         audioMixer.SetFloat("GameSoundsVolume", 0f); //Unmutes the game sounds
         playerMovement.ResumePlayerMovement(); //re-enables the players movement
-        Debug.Log("resume player movement");
-    }
-
-    public void PlayInteractTutorial(){
-        audioSource.clip = interactClip;
-        audioSource.Play();
     }
 }
