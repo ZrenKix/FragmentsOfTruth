@@ -25,6 +25,7 @@ public class Bucket : MonoBehaviour, IInteractable
     public bool Interact(Interactor interactor)
     {
         pickedUpBucket = true;
+        LogManager.Instance.LogEvent($"{gameObject.name} bucket collected");
 
         //change audioclip to pickup sound
         //bucketAS.clip = pickUpAC;

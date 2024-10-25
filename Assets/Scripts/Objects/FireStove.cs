@@ -58,6 +58,8 @@ public class FireStove : MonoBehaviour, IInteractable
         fireStoveAS.Play();
         playerMovementScript.PausePlayerMovement();
 
+        LogManager.Instance.LogEvent($"{gameObject.name} firestove extinguished");
+
         // Start a coroutine to wait for audio clip
         StartCoroutine(DestroyASAfterClip(fireStoveAS.clip.length));
     }

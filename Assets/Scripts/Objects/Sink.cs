@@ -39,6 +39,8 @@ public class Sink : MonoBehaviour, IInteractable
 
             playerMovementScript.PausePlayerMovement();
 
+            LogManager.Instance.LogEvent($"{gameObject.name} water collected");
+
             // Start a coroutine to wait for audio clip and resume movement
             StartCoroutine(ResumeMovementAfterClip(sinkAS.clip.length));
 
