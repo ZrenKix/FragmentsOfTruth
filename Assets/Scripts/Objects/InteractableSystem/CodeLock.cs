@@ -105,7 +105,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
         if (currentSoundIndex == correctCombination[currentStep]) { //If the chosen sound is the same as the correct sound...
             currentStep++; // Go to the next step in the lock-combination
             audioSource.PlayOneShot(rightSound);
-            LogManager.Instance.LogEvent($"{gameObject.name} correct combination on safe");
+            LogManager.Instance.LogEvent($"{gameObject.name} correct combination");
 
             if (currentStep >= correctCombination.Length) { //Is the lock open?
                 UnlockSafe();
@@ -113,7 +113,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
         } else { //If it was wrong
             currentStep = 0;
             audioSource.PlayOneShot(wrongSound);
-            LogManager.Instance.LogEvent($"{gameObject.name} wrong combination on safe");
+            LogManager.Instance.LogEvent($"{gameObject.name} wrong combination");
         }
     }
 
