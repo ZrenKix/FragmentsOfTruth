@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
@@ -9,6 +10,8 @@ public class LogManager : MonoBehaviour
     private string logFilePath;
     private StreamWriter logWriter;
     private GameObject player;
+
+    private Dictionary<string, int> customVariables = new Dictionary<string, int>();
 
     private void Awake()
     {
@@ -105,6 +108,7 @@ public class LogManager : MonoBehaviour
         {
             try
             {
+                LogSummary();
                 logWriter.Flush();
                 logWriter.Close();
                 logWriter = null;
@@ -215,6 +219,41 @@ public class LogManager : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"Failed to log event: {e.Message}");
+        }
+    }
+
+    // New method to store a custom variable
+    public void StoreValue(string variableName, int changeAmount)
+    {
+        if (customVariables.ContainsKey(variableName))
+        {
+            customVariables[variableName] += changeAmount; // Update the existing value with the change
+        }
+        else
+        {
+            customVariables[variableName] = changeAmount; // Add new variable with initial value
+        }
+
+        Debug.Log($"Stored value: {variableName} = {customVariables[variableName]}");
+    }
+
+    // New method to log summary of stored variables
+    private void LogSummary()
+    {
+        if (logWriter == null) return;
+
+        try
+        {
+            logWriter.WriteLine("\n--- SUMMARY ---");
+            foreach (var kvp in customVariables)
+            {
+                logWriter.WriteLine($"{kvp.Key}: {kvp.Value}");
+            }
+            logWriter.Flush();
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Failed to log summary: {e.Message}");
         }
     }
 }
