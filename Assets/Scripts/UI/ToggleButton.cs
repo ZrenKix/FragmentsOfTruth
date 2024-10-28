@@ -130,7 +130,7 @@ public class ButtonToggle : MonoBehaviour
         {
             audioSource.clip = endGameClip;
             audioSource.Play();
-            Invoke(nameof(ExitGame), endGameClip.length);  // Wait for endgame clip to finish
+            Invoke(nameof(ExitGame), endGameClip.length + 0.2f);  // Wait for endgame clip to finish
         }
         else
         {
@@ -140,11 +140,8 @@ public class ButtonToggle : MonoBehaviour
 
     private void ExitGame()
     {
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;  // Stop play mode in the editor
-#else
+
             Application.Quit();  // Quit the game in a built version
-#endif
     }
 
     private void PlayAudioClip(AudioClip clip)
