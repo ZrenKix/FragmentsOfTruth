@@ -12,7 +12,7 @@ public class ButtonToggle : MonoBehaviour
     public AudioClip confirmClip1;
     public AudioClip confirmClip2;
     public AudioClip introClip;
-    public AudioClip endGameClip;  // New endgame sound clip
+    public AudioClip endGameClip;  // Endgame sound clip
     public GameObject uiPanel;
     public AudioMixer audioMixer;
 
@@ -112,17 +112,29 @@ public class ButtonToggle : MonoBehaviour
 
     private void ConfirmSelection()
     {
+        // Play the confirm clip based on the current selection
         if (currentButtonIndex == 0)
         {
             PlayAudioClip(confirmClip1);
-            ResumeGame();
         }
         else
         {
             PlayAudioClip(confirmClip2);
-            PlayEndGameAndExit();
         }
-    }
+
+        // Hide the panel and resume game sounds
+        ResumeGame();
+
+        // For Option 2, schedule the end game and exit
+        if (currentButtonIndex == 1)
+        {
+            Invoke(nameof(PlayEndGameAndExit), confirmClip2.length + 0.2f);  // Delay to play endgame sound after confirmClip2
+        }
+        if (currentButtonIndex == 0)
+        {
+            Invoke(nameof(PlayEndGameAndExit), confirmClip1.length + 0.2f);
+        }
+        }
 
     private void PlayEndGameAndExit()
     {
@@ -130,7 +142,12 @@ public class ButtonToggle : MonoBehaviour
         {
             audioSource.clip = endGameClip;
             audioSource.Play();
-            Invoke(nameof(ExitGame), endGameClip.length + 0.2f);  // Wait for endgame clip to finish
+
+            // Set time scale to 1 to avoid delays due to paused state
+            Time.timeScale = 1f;
+
+            // Schedule the exit after the endgame sound finishes playing
+            Invoke(nameof(ExitGame), endGameClip.length);
         }
         else
         {
@@ -140,8 +157,11 @@ public class ButtonToggle : MonoBehaviour
 
     private void ExitGame()
     {
-
-            Application.Quit();  // Quit the game in a built version
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;  // Stop play mode in the editor
+#else
+        Application.Quit();  // Quit the game in a built version
+#endif
     }
 
     private void PlayAudioClip(AudioClip clip)
