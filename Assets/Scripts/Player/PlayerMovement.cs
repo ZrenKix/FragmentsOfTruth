@@ -34,6 +34,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Start()
     {
+        // load config settings
+        GameConfig config = ConfigManager.Instance.Config;
+        moveSpeed = config.moveSpeed;
+        rotationSpeed = config.rotationSpeed;
+
+
         rb = GetComponent<Rigidbody>();
 
         // Initialize collision sound
