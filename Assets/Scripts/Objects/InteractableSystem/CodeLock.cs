@@ -19,13 +19,14 @@ public class CodeLock : MonoBehaviour, IInteractable {
     [SerializeField] private AudioClip unlockSound;
     [SerializeField] private AudioClip openVaultSound;
 
+    [SerializeField] private string m_interactionPrompt;
+    public string InteractionPrompt => m_interactionPrompt;
+
     private int currentStep = 0; 
     private int currentSoundIndex = 0; //For keeping track of current click-sound
 
     private bool isInteracting = false;
     private bool hasPlayedInstruction = false;
-    
-    public string InteractionPrompt { get; }
 
     private void Start() {
         SetUpCorrectCombination(); 
