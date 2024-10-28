@@ -134,7 +134,7 @@ public class ButtonToggle : MonoBehaviour
         {
             Invoke(nameof(PlayEndGameAndExit), confirmClip1.length + 0.2f);
         }
-        }
+    }
 
     private void PlayEndGameAndExit()
     {
