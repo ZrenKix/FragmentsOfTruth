@@ -12,6 +12,9 @@ public class Locked : MonoBehaviour, IInteractable
 
     private PlayerMovement m_playerMovement;
 
+    [SerializeField] private string m_interactionPrompt;
+    public string InteractionPrompt => m_interactionPrompt;
+
     private void Start()
     {
         if (m_freezePlayer)
@@ -23,8 +26,6 @@ public class Locked : MonoBehaviour, IInteractable
             }
         }
     }
-
-    public string InteractionPrompt { get; }
     public bool Interact(Interactor interactor)
     {
         m_audioSource.clip = null;
@@ -40,8 +41,6 @@ public class Locked : MonoBehaviour, IInteractable
         }
         StartCoroutine(AfterAudio());
         gameObject.layer = LayerMask.NameToLayer("Default");
-
-        LogManager.Instance.LogEvent($"{gameObject.name} opened");
 
         return true;
     }

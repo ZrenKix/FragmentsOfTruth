@@ -9,12 +9,13 @@ public class Key : MonoBehaviour, IInteractable
     [SerializeField] private bool m_destoryAfterInteraction;
     [SerializeField] private AudioClip m_clip;
     [SerializeField] private AudioSource source;
+    [SerializeField] private string m_interactionPrompt;
+    public string InteractionPrompt => m_interactionPrompt;
 
     private void Start()
     {
         if (!m_clip.IsUnityNull() && source != null) source.clip = m_clip;
     }
-    public string InteractionPrompt { get; }
 
     public bool Interact(Interactor interactor) 
     {

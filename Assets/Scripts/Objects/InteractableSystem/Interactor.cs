@@ -23,19 +23,26 @@ public class Interactor : MonoBehaviour
             _interactableMask
         );
 
-        if (_numFound > 0 && Input.GetKeyDown(KeyCode.E))
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            // Optionally, you can find the closest collider or interact with all of them
-            Collider collider = _colliders[0]; // You can modify this to select a specific collider
+            LogManager.Instance.StoreValue("Pressed E", 1);
 
-            // Retrieve all IInteractable components on the collider's GameObject
-            IInteractable[] interactables = collider.GetComponents<IInteractable>();
-            foreach (IInteractable interactable in interactables)
+            if (_numFound > 0)
             {
-                // Call Interact on each interactable component
-                if (interactable.Interact(this))
+                // Optionally, you can find the closest collider or interact with all of them
+                Collider collider = _colliders[0]; // You can modify this to select a specific collider
+
+                // Retrieve all IInteractable components on the collider's GameObject
+                IInteractable[] interactables = collider.GetComponents<IInteractable>();
+                foreach (IInteractable interactable in interactables)
                 {
-                    audioSource.PlayOneShot(audioClip);
+                    // Call Interact on each interactable component
+                    if (interactable.Interact(this))
+                    {
+                        LogManager.Instance.LogEvent($"{gameObject.name} did interaction: {interactable.InteractionPrompt}, {interactable}");
+                        LogManager.Instance.StoreValue("Total interacted objects", 1);
+                        audioSource.PlayOneShot(audioClip);
+                    }
                 }
             }
         }
