@@ -11,6 +11,7 @@ public class Sink : MonoBehaviour, IInteractable
     private PlayerMovement playerMovementScript;
     [SerializeField] private AudioClip waterRunningAC;
     [SerializeField] private AudioClip waterDrippingAC;
+    [SerializeField] private AudioClip sinkLockedVoiceLine;
     [SerializeField] private AudioSource sinkAS;
 
     public string InteractionPrompt { get; }
@@ -47,6 +48,10 @@ public class Sink : MonoBehaviour, IInteractable
             return true;
         } else
         {
+            //play voiceline for locked sink
+            //sinkAS.clip = sinkLockedVoiceLine;
+            //sinkAS.loop = false;
+
             return false;
         }
     }

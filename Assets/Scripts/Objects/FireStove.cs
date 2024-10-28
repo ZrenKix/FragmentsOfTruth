@@ -10,6 +10,8 @@ public class FireStove : MonoBehaviour, IInteractable
     [SerializeField] bool isBurning = true;
     [SerializeField] private AudioClip fireExtinguishAC;
     [SerializeField] private AudioClip fireAC;
+    [SerializeField] private AudioClip firestoveLockedVoiceLine;
+    [SerializeField] private AudioClip firestoveOpenVoiceLine;
     [SerializeField] private AudioSource fireStoveAS;
     [SerializeField] private GameObject fireStoveMemory;
     private bool hasExtinguishedFire = false; //to prevent audio source from double playing sound
@@ -39,6 +41,10 @@ public class FireStove : MonoBehaviour, IInteractable
         else
         {
             //play detective voice line that says there's something in the firestove, but the fire is in the way
+            //fireStoveAS.clip = firestoveLockedVoiceLine;
+            //fireStoveAS.loop = false;
+            //fireStoveAS.Play();
+            
             return false;
         }
         
@@ -61,6 +67,19 @@ public class FireStove : MonoBehaviour, IInteractable
         LogManager.Instance.LogEvent($"{gameObject.name} firestove extinguished");
 
         // Start a coroutine to wait for audio clip
+        StartCoroutine(PlayVoiceLineAfterClip(fireStoveAS.clip.length));
+    }
+
+    private IEnumerator PlayVoiceLineAfterClip(float clipLength)
+    {
+        //acts after the audio clip is finished
+        yield return new WaitForSeconds(clipLength);
+
+        //play reaction voiceline to extinguished stove
+        //fireStoveAS.clip = firestoveOpenVoiceLine;
+        //fireStoveAS.Play();
+
+        // Start a coroutine to wait for audio clip
         StartCoroutine(DestroyASAfterClip(fireStoveAS.clip.length));
     }
 
@@ -68,6 +87,7 @@ public class FireStove : MonoBehaviour, IInteractable
     {
         //acts after the audio clip is finished
         yield return new WaitForSeconds(clipLength);
+        
         Destroy(this.gameObject); //remove so it wont play even with interaction
         //Destroy(fireStoveAS); //remove the audiosource so it wont play even with interaction
         fireStoveMemory.layer = 6; //set the memorys layer from default to interactable

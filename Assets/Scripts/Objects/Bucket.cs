@@ -7,17 +7,18 @@ public class Bucket : MonoBehaviour, IInteractable
     //Av Linn Li
 
 
-    [SerializeField] private AudioClip pickUpAC;
+    [SerializeField] private AudioClip pickupVoiceLine;
     [SerializeField] private AudioClip bucketAC;
     [SerializeField] private AudioSource bucketAS;
     public bool pickedUpBucket = false;
     public bool hasWater = false;
 
-    public string InteractionPrompt { get; }
+    [SerializeField] private string m_interactionPrompt;
+    public string InteractionPrompt => m_interactionPrompt;
 
     void Start()
     {
-        //audioclip is the bucket sound, for locatin the bucket
+        //bucketAC is the bucket sound, for locating the bucket
         bucketAS.clip = bucketAC;
         bucketAS.loop = true;
     }
@@ -25,23 +26,19 @@ public class Bucket : MonoBehaviour, IInteractable
     public bool Interact(Interactor interactor)
     {
         pickedUpBucket = true;
-        LogManager.Instance.LogEvent($"{gameObject.name} bucket collected");
 
-        //change audioclip to pickup sound
-        //bucketAS.clip = pickUpAC;
+        //play the voiceline reacting to the bucket
+        //bucketAS.clip = pickupVoiceLine;
         //bucketAS.loop = false;
-
-        // Start a coroutine to wait for audio clip
-        //StartCoroutine(DestroyASAfterClip(bucketAS.clip.length));
 
         Destroy(this.gameObject);
         return true;
     }
 
-    private IEnumerator DestroyASAfterClip(float clipLength)
-    {
+    //private IEnumerator DestroyASAfterClip(float clipLength)
+    //{
         //acts after the audio clip is finished
-        yield return new WaitForSeconds(clipLength);
-        Destroy(this.gameObject);
-    }
+        //yield return new WaitForSeconds(clipLength);
+        //Destroy(this.gameObject);
+    //}
 }
