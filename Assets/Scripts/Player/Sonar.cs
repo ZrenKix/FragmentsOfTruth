@@ -22,7 +22,7 @@ public class Sonar : MonoBehaviour
     private AudioClip originalClip; // Store the original audio clip
 
     public enum State { On, Off }
-    public State state;
+    public State state = State.Off;
 
     // List of object-audio pairs to be set in the Unity Editor
     [SerializeField] private List<ObjectAudioPair> objectAudioPairs = new List<ObjectAudioPair>();
@@ -32,6 +32,10 @@ public class Sonar : MonoBehaviour
 
     private void Start()
     {
+        // load config settings
+        GameConfig config = ConfigManager.Instance.Config;
+        state = (State)config.sonarState;
+
         mainCamera = Camera.main;
         originalClip = m_audioClip;  // Store the initial sonar audio clip
 
@@ -74,6 +78,7 @@ public class Sonar : MonoBehaviour
                 m_audioSource.clip = originalClip;  // Restore the original sonar audio clip
                 m_nextPingTime = Time.time;
             }
+            LogManager.Instance.LogEvent($"{gameObject.name}, Sonar state: {state.ToString()}");
         }
 
         // Raycast should work all the time

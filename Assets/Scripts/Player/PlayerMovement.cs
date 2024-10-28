@@ -27,8 +27,19 @@ public class PlayerMovement : MonoBehaviour
     public Transform headTransform;           // Assign the head's Transform
     public float headCollisionRadius = 0.5f;  // Radius for head collision detection
 
+    // Footstep distance tracking
+    private Vector3 previousPosition;
+    private float footstepDistanceCounter = 0f;
+    public float footstepStepDistance = 0.5f; // Adjust this value as needed
+
     void Start()
     {
+        // load config settings
+        GameConfig config = ConfigManager.Instance.Config;
+        moveSpeed = config.moveSpeed;
+        rotationSpeed = config.rotationSpeed;
+
+
         rb = GetComponent<Rigidbody>();
 
         // Initialize collision sound
@@ -42,7 +53,11 @@ public class PlayerMovement : MonoBehaviour
 
         // Set Rigidbody constraints to prevent unwanted rotation
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        // Initialize previous position
+        previousPosition = transform.position;
     }
+
     void Update()
     {
         float moveZ = 0;
@@ -77,12 +92,6 @@ public class PlayerMovement : MonoBehaviour
         {
             Vector3 movement = rb.transform.forward * movementInput.z * moveSpeed * Time.fixedDeltaTime;
             rb.MovePosition(rb.position + movement);
-
-            // Play footstep sounds
-            if (!m_AudioSource.isPlaying)
-            {
-                PlayFootStepAudio();
-            }
         }
 
         // Stop player immediately when no input
@@ -90,7 +99,39 @@ public class PlayerMovement : MonoBehaviour
         {
             rb.velocity = Vector3.zero;
         }
+
+        // Footstep sound based on distance moved
+        CalculateFootstepSounds();
     }
+
+    private void CalculateFootstepSounds()
+    {
+        if (movementInput.z != 0)
+        {
+            // Calculate distance moved since last frame
+            float distanceMoved = Vector3.Distance(transform.position, previousPosition);
+            footstepDistanceCounter += distanceMoved;
+
+            // Check if accumulated distance exceeds footstepStepDistance
+            if (footstepDistanceCounter >= footstepStepDistance)
+            {
+                if (!m_AudioSource.isPlaying)
+                {
+                    PlayFootStepAudio();
+                }
+                footstepDistanceCounter = 0f;
+            }
+        }
+        else
+        {
+            // Optionally reset the counter when not moving
+            footstepDistanceCounter = 0f;
+        }
+
+        // Update previous position
+        previousPosition = transform.position;
+    }
+
 
     public bool IsMoving()
     {
