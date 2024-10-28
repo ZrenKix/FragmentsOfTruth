@@ -32,6 +32,10 @@ public class Sonar : MonoBehaviour
 
     private void Start()
     {
+        // load config settings
+        GameConfig config = ConfigManager.Instance.Config;
+        state = (State)config.sonarState;
+
         mainCamera = Camera.main;
         originalClip = m_audioClip;  // Store the initial sonar audio clip
 

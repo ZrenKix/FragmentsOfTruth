@@ -1,0 +1,5 @@
+{
+    "moveSpeed": 5.0,
+    "rotationSpeed": 90.0,
+    "sonarState": "Off"
+}
