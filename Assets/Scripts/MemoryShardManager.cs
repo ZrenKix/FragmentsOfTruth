@@ -68,4 +68,17 @@ public class MemoryShardManager : MonoBehaviour
 
         Debug.Log("Audio sources activated.");
     }
+
+    public bool allShardsFound()
+    {
+        if (shardsCollected == totalShards)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 }
