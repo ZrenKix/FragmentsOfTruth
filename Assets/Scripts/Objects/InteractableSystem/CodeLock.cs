@@ -22,6 +22,10 @@ public class CodeLock : MonoBehaviour, IInteractable {
 
     [SerializeField] private AudioMixer audioMixer;
 
+    [SerializeField] private AudioClip wrongVoiceline;
+    [SerializeField] private AudioClip descriptiveVoiceline;
+    [SerializeField] private AudioClip openedVoiceline;
+
     [SerializeField] private string m_interactionPrompt;
     public string InteractionPrompt => m_interactionPrompt;
 
@@ -47,7 +51,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
     
         //Exlpain the controls for the player (A, D , Esc)
         if (!hasPlayedInstruction){
-            ExplainControls();
+            StartCoroutine(ExplainControls());
         }
 
         isInteracting = true;
@@ -55,9 +59,14 @@ public class CodeLock : MonoBehaviour, IInteractable {
         return true; //returns true if the interaction was successful
     }
 
-    private void ExplainControls(){
-        audioSource.PlayOneShot(instructions);
+    private IEnumerator ExplainControls(){
         hasPlayedInstruction = true;
+
+        audioSource.PlayOneShot(descriptiveVoiceline);
+        yield return new WaitForSeconds(descriptiveVoiceline.length);
+
+        audioSource.PlayOneShot(instructions);
+        yield return new WaitForSeconds(instructions.length);
     }
 
     private void ManagePlayerInput() {
@@ -113,28 +122,49 @@ public class CodeLock : MonoBehaviour, IInteractable {
             LogManager.Instance.LogEvent($"{gameObject.name} correct combination");
 
             if (currentStep >= correctCombination.Length) { //Is the lock open?
-                UnlockSafe();
+                //UnlockSafe();
+                StartCoroutine(UnlockSafe());
             }
         } else { //If it was wrong
             currentStep = 0;
-            audioSource.PlayOneShot(wrongSound);
+            StartCoroutine(PlayWrongSounds());
             LogManager.Instance.LogEvent($"{gameObject.name} wrong combination");
         }
     }
 
-    private void UnlockSafe() {
+    private IEnumerator PlayWrongSounds(){
+        audioSource.PlayOneShot(wrongSound);
+        yield return new WaitForSeconds(wrongSound.length);
+
+        audioSource.PlayOneShot(wrongVoiceline);
+        yield return new WaitForSeconds(wrongVoiceline.length);
+    }
+
+    // private void UnlockSafe() {
+    //     StartCoroutine(PlayUnlockedSounds());
+    //     EndInteraction();
+    //     safeMemory.layer = 6; //Set the memorys layer from default to interactable
+    //     gameObject.layer = 0; //Enables the interaction
+    // }
+
+    private IEnumerator UnlockSafe(){
         audioSource.PlayOneShot(unlockSound);
+        yield return new WaitForSeconds(unlockSound.length);
+
         audioSource.PlayOneShot(openVaultSound);
+        yield return new WaitForSeconds(openVaultSound.length);
+
+        audioSource.PlayOneShot(openedVoiceline);
+        yield return new WaitForSeconds(openedVoiceline.length);
+
         EndInteraction();
         safeMemory.layer = 6; //Set the memorys layer from default to interactable
         gameObject.layer = 0; //Enables the interaction
-        Debug.Log("Kassaksåpet är upplåst");
     }
 
     private void EndInteraction(){
         isInteracting = false;
         playerMovement.ResumePlayerMovement(); //re-enables the players movement
-        Debug.Log("interaktionen har avslutats");
         audioMixer.SetFloat("GameSoundsVolume", 0f); // Unmutes the game sounds
     }
 
