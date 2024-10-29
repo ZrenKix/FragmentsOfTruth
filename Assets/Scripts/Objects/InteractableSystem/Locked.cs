@@ -37,8 +37,11 @@ public class Locked : MonoBehaviour, IInteractable
     }
     public bool Interact(Interactor interactor)
     {
-        // Check if the object's layer is "Trunk"
-        if (LayerMask.LayerToName(gameObject.layer) == "Trunk")
+        int trunkLayerIndex = LayerMask.NameToLayer("Trunk");
+        Debug.Log($"Interact called on {gameObject.name}, gameObject.layer: {gameObject.layer}, Trunk Layer Index: {trunkLayerIndex}");
+
+        // Check if the object's layer is "Trunk" by comparing layer indices
+        if (gameObject.layer == LayerMask.NameToLayer("Trunk"))
         {
             // Play the locked sound
             m_audioSource.clip = null;
@@ -49,12 +52,12 @@ public class Locked : MonoBehaviour, IInteractable
         else
         {
             // Proceed with normal interaction
-
             if (m_freezePlayer)
             {
                 m_playerMovement.PausePlayerMovement();
             }
             StartCoroutine(PlayClipsSequentially(m_audioClip.length));
+
             // Change the object's layer to "Default" to prevent re-interaction
             gameObject.layer = LayerMask.NameToLayer("Default");
 
