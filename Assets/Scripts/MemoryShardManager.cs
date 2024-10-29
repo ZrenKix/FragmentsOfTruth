@@ -48,7 +48,7 @@ public class MemoryShardManager : MonoBehaviour
     {
         Debug.Log("All memory shards found! Opening door.");
         doorController.OpenDoor();  // Open the door when all shards are found
-        Invoke("ActivateAudioSources", 26f);     // Activate audio sources when the door opens
+        Invoke("ActivateAudioSources", 32f);     // Activate audio sources when the door opens
     }
 
     private void ActivateAudioSources()
