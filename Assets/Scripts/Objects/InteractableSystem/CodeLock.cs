@@ -60,17 +60,17 @@ public class CodeLock : MonoBehaviour, IInteractable {
     }
 
     private IEnumerator ExplainControls(){
-        hasPlayedInstruction = true;
-
         audioSource.PlayOneShot(descriptiveVoiceline);
         yield return new WaitForSeconds(descriptiveVoiceline.length);
 
         audioSource.PlayOneShot(instructions);
         yield return new WaitForSeconds(instructions.length);
+
+        hasPlayedInstruction = true;
     }
 
     private void ManagePlayerInput() {
-        if (currentStep < correctCombination.Length) {
+        if (currentStep < correctCombination.Length && hasPlayedInstruction) {
             if (Input.GetKeyDown(KeyCode.A)) { //If player is pressing A then go down 
                 ChangeSound(-1);
             } else if (Input.GetKeyDown(KeyCode.D)){ //If player is pressing D then go up
