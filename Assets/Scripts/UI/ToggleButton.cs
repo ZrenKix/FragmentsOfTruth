@@ -39,7 +39,7 @@ public class ButtonToggle : MonoBehaviour
                 ToggleButton(1);
             }
 
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E))
             {
                 ConfirmSelection();
             }
