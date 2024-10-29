@@ -24,7 +24,7 @@ public class AudioFilterController : MonoBehaviour
             if (lowPassFilter == null)
             {
                 lowPassFilter = audioSource.gameObject.AddComponent<AudioLowPassFilter>();
-                Debug.Log($"Added AudioLowPassFilter to AudioSource: {audioSource.gameObject.name}");
+                //Debug.Log($"Added AudioLowPassFilter to AudioSource: {audioSource.gameObject.name}");
             }
 
             allLowPassFilters[i] = lowPassFilter;
@@ -52,13 +52,13 @@ public class AudioFilterController : MonoBehaviour
             {
                 // Sound source is behind the player, apply low-pass filter
                 lowPassFilter.cutoffFrequency = cutoffFrequencyBehind;
-                Debug.Log($"AudioSource '{audioSource.gameObject.name}' is behind the player. Low-pass filter applied.");
+                //Debug.Log($"AudioSource '{audioSource.gameObject.name}' is behind the player. Low-pass filter applied.");
             }
             else
             {
                 // Sound source is in front of the player, set normal cutoff frequency
                 lowPassFilter.cutoffFrequency = normalCutoffFrequency;
-                Debug.Log($"AudioSource '{audioSource.gameObject.name}' is in front of the player. Normal audio applied.");
+                //Debug.Log($"AudioSource '{audioSource.gameObject.name}' is in front of the player. Normal audio applied.");
             }
         }
     }

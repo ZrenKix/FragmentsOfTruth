@@ -6,6 +6,8 @@ using System.Collections.Generic;
 public class Locked : MonoBehaviour, IInteractable
 {
     [SerializeField] private AudioClip m_audioClip;
+    [SerializeField] private AudioClip m_lockedAudioClip;
+    [SerializeField] private AudioClip m_trunkVoiceKeyAudioClip;
     //[SerializeField] private AudioClip m_audioClip2;
     //[SerializeField] private AudioClip memoryClip;
     [SerializeField] private AudioSource m_audioSource;
@@ -35,28 +37,50 @@ public class Locked : MonoBehaviour, IInteractable
     }
     public bool Interact(Interactor interactor)
     {
-        m_audioSource.clip = null;
-        m_audioSource.PlayOneShot(m_audioClip, 1);
-        // if (!m_audioSource.isPlaying)
-        // {
-        //     m_audioSource.PlayOneShot(m_audioClip2);
-        // }
-
-        if (m_freezePlayer)
+        // Check if the object's layer is "Trunk"
+        if (LayerMask.LayerToName(gameObject.layer) == "Trunk")
         {
-            m_playerMovement.PausePlayerMovement();
+            // Play the locked sound
+            m_audioSource.clip = null;
+            m_audioSource.PlayOneShot(m_lockedAudioClip, 1);
+
+            return false; // Interaction did not proceed
         }
+        else
+        {
+            // Proceed with normal interaction
 
-        Debug.Log("audioS: " + m_audioSource.isPlaying);
+            if (m_freezePlayer)
+            {
+                m_playerMovement.PausePlayerMovement();
+            }
+            StartCoroutine(PlayClipsSequentially(m_audioClip.length));
+            // Change the object's layer to "Default" to prevent re-interaction
+            gameObject.layer = LayerMask.NameToLayer("Default");
 
-        StartCoroutine(PlayClipsSequentially(m_audioClip.length));
+            // Start the interaction sequence coroutine
+            StartCoroutine(PlayInteractionSequence());
 
-        //StartCoroutine(AfterAudio());
-        gameObject.layer = LayerMask.NameToLayer("Default");
-
-        return true;
+            return true; // Interaction succeeded
+        }
     }
 
+    IEnumerator PlayInteractionSequence()
+    {
+        // If m_trunkVoiceKeyAudioClip is not null, play it and wait
+        if (m_trunkVoiceKeyAudioClip != null)
+        {
+            m_audioSource.clip = null;
+            m_audioSource.PlayOneShot(m_trunkVoiceKeyAudioClip, 1);
+            yield return new WaitForSeconds(m_trunkVoiceKeyAudioClip.length);
+        }
+
+        // Play m_audioClip (chest opening sound) and wait
+        m_audioSource.clip = null;
+        m_audioSource.PlayOneShot(m_audioClip, 1);
+        yield return new WaitForSeconds(m_audioClip.length);
+
+    }
     // private IEnumerator AfterAudio()
     // {
     //     yield return new WaitForSeconds(memoryClip.length);
@@ -102,3 +126,4 @@ public class Locked : MonoBehaviour, IInteractable
     //     if (m_destoryAfterClip) Destroy(gameObject);
     // }
 }
+

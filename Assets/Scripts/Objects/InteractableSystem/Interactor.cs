@@ -14,6 +14,11 @@ public class Interactor : MonoBehaviour
     private readonly Collider[] _colliders = new Collider[3];
     [SerializeField] private int _numFound;
 
+    private void Start()
+    {
+        // Initialize the layer mask to include "Interactable" and "Trunk"
+        _interactableMask = LayerMask.GetMask("Interactable", "Trunk");
+    }
     private void Update()
     {
         _numFound = Physics.OverlapSphereNonAlloc(
