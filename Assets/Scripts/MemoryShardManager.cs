@@ -7,7 +7,7 @@ public class MemoryShardManager : MonoBehaviour
     public static MemoryShardManager Instance;
 
     [SerializeField] private int totalShards = 3;  // Total number of shards to find
-    private int shardsCollected = 0;  // Count of found shards
+    [SerializeField] private int shardsCollected = 0;  // Count of found shards
 
     [SerializeField] private DoorController doorController; // Reference to door controller to open the door
 
@@ -48,7 +48,7 @@ public class MemoryShardManager : MonoBehaviour
     {
         Debug.Log("All memory shards found! Opening door.");
         //doorController.OpenDoor();  // Open the door when all shards are found
-        Invoke("ActivateAudioSources", 32f);     // Activate audio sources when the door opens
+        Invoke("ActivateAudioSources", 45f);     // Activate audio sources when the door opens
     }
 
     private void ActivateAudioSources()
