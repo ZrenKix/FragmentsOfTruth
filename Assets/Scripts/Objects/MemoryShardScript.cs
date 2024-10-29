@@ -4,6 +4,7 @@ using UnityEngine;
 public class MemoryShardScript : MonoBehaviour, IInteractable
 {
     [Header("Audio")]
+    [SerializeField] private AudioClip m_CueMinneAudioClip; // Additional audio clip to play
     [SerializeField] private AudioClip m_buildUpAudioClip;
     [SerializeField] private AudioClip m_memoryAudioClip;
     [SerializeField] private AudioClip m_afer_memoryAudioClip;
@@ -46,31 +47,53 @@ public class MemoryShardScript : MonoBehaviour, IInteractable
             return false;
         }
 
-        // Pausa spelarens rörelse och spela upp minnesljudet
+        // Pause player's movement and play the memory sequence
         m_playerMovement.PausePlayerMovement();
         m_audioManager.PauseAllAudioSourcesExcept(m_audioSource);
         m_isMemorySequenceActive = true;
 
-        m_audioSource.clip = m_buildUpAudioClip;
-        StartCoroutine(AfterFlashBack());
+        // Start the memory sequence coroutine
+        StartCoroutine(PlayMemorySequence());
 
-        // Meddela MemoryShardManager att en shard har hittats
+        // Notify MemoryShardManager that a shard has been found
         MemoryShardManager.Instance.ShardFound();
 
         Debug.Log("Playing memory");
         return true;
     }
 
-    private IEnumerator AfterFlashBack()
+    private IEnumerator PlayMemorySequence()
     {
-        yield return new WaitForSeconds(m_buildUpAudioClip.length);
-        m_audioSource.clip = m_memoryAudioClip;
-        StartCoroutine(ResumeAudioAfterMemory());
-    }
+        // If the object's name is "Memory", play the additional audio clip
+        if (gameObject.name == "Memory" && m_CueMinneAudioClip != null)
+        {
+            m_audioSource.clip = m_CueMinneAudioClip;
+            m_audioSource.Play();
+            yield return new WaitForSeconds(m_CueMinneAudioClip.length);
+        }
 
-    private IEnumerator ResumeAudioAfterMemory()
-    {
-        yield return new WaitForSeconds(m_memoryAudioClip.length + m_resumeAudioDelay);
+        // Play the build-up audio clip
+        m_audioSource.clip = m_buildUpAudioClip;
+        m_audioSource.Play();
+        yield return new WaitForSeconds(m_buildUpAudioClip.length);
+
+        // Play the memory audio clip
+        m_audioSource.clip = m_memoryAudioClip;
+        m_audioSource.Play();
+        yield return new WaitForSeconds(m_memoryAudioClip.length);
+
+        // Play the after-memory audio clip if assigned
+        if (m_afer_memoryAudioClip != null)
+        {
+            m_audioSource.clip = m_afer_memoryAudioClip;
+            m_audioSource.Play();
+            yield return new WaitForSeconds(m_afer_memoryAudioClip.length);
+        }
+
+        // Wait for any additional delay
+        yield return new WaitForSeconds(m_resumeAudioDelay);
+
+        // Resume normal game state
         ResumeAfterMemory();
     }
 
