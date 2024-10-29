@@ -20,9 +20,12 @@ public class ButtonToggle : MonoBehaviour
     private bool isPaused = false;
     private bool isTriggered = false;
 
+    private PlayerMovement playerMovement;
+
     void Start()
     {
         uiPanel.SetActive(false);
+        playerMovement= FindObjectOfType<PlayerMovement>();
     }
 
     void Update()
@@ -39,7 +42,7 @@ public class ButtonToggle : MonoBehaviour
                 ToggleButton(1);
             }
 
-            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.E))
             {
                 ConfirmSelection();
             }
@@ -170,6 +173,7 @@ public class ButtonToggle : MonoBehaviour
         {
             audioSource.clip = clip;
             audioSource.Play();
+            playerMovement.PausePlayerMovement();
         }
     }
 }

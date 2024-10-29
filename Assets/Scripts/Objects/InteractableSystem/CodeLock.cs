@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.Audio;
 
 public class CodeLock : MonoBehaviour, IInteractable {
     [SerializeField] private PlayerMovement playerMovement;
@@ -18,6 +19,8 @@ public class CodeLock : MonoBehaviour, IInteractable {
     [SerializeField] private AudioClip correctSound;
     [SerializeField] private AudioClip unlockSound;
     [SerializeField] private AudioClip openVaultSound;
+
+    [SerializeField] private AudioMixer audioMixer;
 
     [SerializeField] private string m_interactionPrompt;
     public string InteractionPrompt => m_interactionPrompt;
@@ -40,6 +43,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
     
     public bool Interact(Interactor interactor) {
         playerMovement.PausePlayerMovement(); //Disable the player's movement
+        audioMixer.SetFloat("GameSoundsVolume", -80f); // Lowers all other sounds
     
         //Exlpain the controls for the player (A, D , Esc)
         if (!hasPlayedInstruction){
@@ -131,6 +135,7 @@ public class CodeLock : MonoBehaviour, IInteractable {
         isInteracting = false;
         playerMovement.ResumePlayerMovement(); //re-enables the players movement
         Debug.Log("interaktionen har avslutats");
+        audioMixer.SetFloat("GameSoundsVolume", 0f); // Unmutes the game sounds
     }
 
     private void SetUpCorrectCombination() {
