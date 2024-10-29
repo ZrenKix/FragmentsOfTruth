@@ -11,6 +11,7 @@ public class ButtonToggle : MonoBehaviour
     public AudioClip clip2;
     public AudioClip confirmClip1;
     public AudioClip confirmClip2;
+    public AudioClip preIntroClip;  // New pre-intro sound clip
     public AudioClip introClip;
     public AudioClip endGameClip;  // Endgame sound clip
     public GameObject uiPanel;
@@ -25,7 +26,7 @@ public class ButtonToggle : MonoBehaviour
     void Start()
     {
         uiPanel.SetActive(false);
-        playerMovement= FindObjectOfType<PlayerMovement>();
+        playerMovement = FindObjectOfType<PlayerMovement>();
     }
 
     void Update()
@@ -54,19 +55,39 @@ public class ButtonToggle : MonoBehaviour
         if (other.CompareTag("Player") && !isTriggered)
         {
             isTriggered = true;
-            PlayIntroAndPauseGame();
+            PlayPreIntroAndIntro();
         }
     }
 
-    private void PlayIntroAndPauseGame()
+    private void PlayPreIntroAndIntro()
     {
-        if (audioSource != null && introClip != null)
+        if (audioSource != null)
+        {
+            if (preIntroClip != null)
+            {
+                audioSource.clip = preIntroClip;
+                audioSource.Play();
+                Invoke(nameof(PlayIntroClip), preIntroClip.length);  // Play intro after pre-intro finishes
+            }
+            else
+            {
+                PlayIntroClip();  // Play intro immediately if no preIntroClip is set
+            }
+        }
+    }
+
+    private void PlayIntroClip()
+    {
+        if (introClip != null)
         {
             audioSource.clip = introClip;
             audioSource.Play();
+            Invoke(nameof(PauseGame), introClip.length);
         }
-
-        Invoke(nameof(PauseGame), introClip.length);
+        else
+        {
+            PauseGame();  // Pause immediately if no introClip is set
+        }
     }
 
     private void PauseGame()
@@ -115,7 +136,6 @@ public class ButtonToggle : MonoBehaviour
 
     private void ConfirmSelection()
     {
-        // Play the confirm clip based on the current selection
         if (currentButtonIndex == 0)
         {
             PlayAudioClip(confirmClip1);
@@ -125,13 +145,11 @@ public class ButtonToggle : MonoBehaviour
             PlayAudioClip(confirmClip2);
         }
 
-        // Hide the panel and resume game sounds
         ResumeGame();
 
-        // For Option 2, schedule the end game and exit
         if (currentButtonIndex == 1)
         {
-            Invoke(nameof(PlayEndGameAndExit), confirmClip2.length + 0.2f);  // Delay to play endgame sound after confirmClip2
+            Invoke(nameof(PlayEndGameAndExit), confirmClip2.length + 0.2f);
         }
         if (currentButtonIndex == 0)
         {
@@ -146,24 +164,22 @@ public class ButtonToggle : MonoBehaviour
             audioSource.clip = endGameClip;
             audioSource.Play();
 
-            // Set time scale to 1 to avoid delays due to paused state
             Time.timeScale = 1f;
 
-            // Schedule the exit after the endgame sound finishes playing
             Invoke(nameof(ExitGame), endGameClip.length);
         }
         else
         {
-            ExitGame();  // Exit immediately if no endgame clip is set
+            ExitGame();
         }
     }
 
     private void ExitGame()
     {
 #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;  // Stop play mode in the editor
+        UnityEditor.EditorApplication.isPlaying = false;
 #else
-        Application.Quit();  // Quit the game in a built version
+        Application.Quit();
 #endif
     }
 
