@@ -6,8 +6,8 @@ public enum State { On, Off }
 public class GameConfig
 {
     // Player
-    public float moveSpeed = 5f;
-    public float rotationSpeed = 90f;
+    public float moveSpeed = 2.5f;
+    public float rotationSpeed = 50;
 
     // Sonar
     public State sonarState = State.Off;
