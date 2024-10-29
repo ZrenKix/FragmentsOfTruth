@@ -41,9 +41,9 @@ public class FireStove : MonoBehaviour, IInteractable
         else
         {
             //play detective voice line that says there's something in the firestove, but the fire is in the way
-            //fireStoveAS.clip = firestoveLockedVoiceLine;
-            //fireStoveAS.loop = false;
-            //fireStoveAS.Play();
+            fireStoveAS.clip = firestoveLockedVoiceLine;
+            fireStoveAS.loop = false;
+            fireStoveAS.Play();
             
             return false;
         }
@@ -76,8 +76,8 @@ public class FireStove : MonoBehaviour, IInteractable
         yield return new WaitForSeconds(clipLength);
 
         //play reaction voiceline to extinguished stove
-        //fireStoveAS.clip = firestoveOpenVoiceLine;
-        //fireStoveAS.Play();
+        fireStoveAS.clip = firestoveOpenVoiceLine;
+        fireStoveAS.Play();
 
         // Start a coroutine to wait for audio clip
         StartCoroutine(DestroyASAfterClip(fireStoveAS.clip.length));

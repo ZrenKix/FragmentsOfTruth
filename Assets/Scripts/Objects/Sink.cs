@@ -33,7 +33,7 @@ public class Sink : MonoBehaviour, IInteractable
         if (bucketScript.pickedUpBucket == true)
         {
             bucketScript.hasWater = true;
-            
+
             //change audioclip to the one for filling the bucket with water (plays once)
             sinkAS.clip = waterRunningAC;
             sinkAS.loop = false;
@@ -46,12 +46,21 @@ public class Sink : MonoBehaviour, IInteractable
             StartCoroutine(ResumeMovementAfterClip(sinkAS.clip.length));
 
             return true;
-        } else
+        }
+        else if ((bucketScript.pickedUpBucket == false))
         {
             //play voiceline for locked sink
-            //sinkAS.clip = sinkLockedVoiceLine;
-            //sinkAS.loop = false;
+            sinkAS.loop = false;
+            sinkAS.clip = sinkLockedVoiceLine;
+            sinkAS.Play();
 
+            //change back to dripping audioclip after voiceline has played
+            StartCoroutine(ChangeToDripping(sinkAS.clip.length));
+
+            return true;
+        }
+        else 
+        {
             return false;
         }
     }
@@ -62,6 +71,17 @@ public class Sink : MonoBehaviour, IInteractable
         yield return new WaitForSeconds(clipLength);
         playerMovementScript.ResumePlayerMovement();
 
+
+        //change back audioclip to dripping water
+        sinkAS.clip = waterDrippingAC;
+        sinkAS.Play();
+        sinkAS.loop = true;
+    }
+
+    private IEnumerator ChangeToDripping(float clipLength)
+    {
+        //resumes player movement after the audioClip is finished
+        yield return new WaitForSeconds(clipLength);
 
         //change back audioclip to dripping water
         sinkAS.clip = waterDrippingAC;

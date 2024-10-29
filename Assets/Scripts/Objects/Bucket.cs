@@ -28,17 +28,17 @@ public class Bucket : MonoBehaviour, IInteractable
         pickedUpBucket = true;
 
         //play the voiceline reacting to the bucket
-        //bucketAS.clip = pickupVoiceLine;
-        //bucketAS.loop = false;
+        bucketAS.clip = pickupVoiceLine;
+        bucketAS.loop = false;
 
-        Destroy(this.gameObject);
+        StartCoroutine(DestroyASAfterClip(bucketAS.clip.length));
         return true;
     }
 
-    //private IEnumerator DestroyASAfterClip(float clipLength)
-    //{
+    private IEnumerator DestroyASAfterClip(float clipLength)
+    {
         //acts after the audio clip is finished
-        //yield return new WaitForSeconds(clipLength);
-        //Destroy(this.gameObject);
-    //}
+        yield return new WaitForSeconds(clipLength);
+        Destroy(this.gameObject);
+    }
 }
