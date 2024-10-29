@@ -33,13 +33,24 @@ public class MemoryShardManager : MonoBehaviour
         // If all shards have been collected, open the door
         if (shardsCollected >= totalShards)
         {
-            OpenDoor();
+            //OpenDoor();
         }
     }
 
-    private void OpenDoor()
+    //private void OpenDoor()
+    //{
+        //Debug.Log("All memory shards found! Opening door.");
+        //doorController.OpenDoor();  // Open the door when all shards are found
+    //}
+
+    public bool allShardsFound()
     {
-        Debug.Log("All memory shards found! Opening door.");
-        doorController.OpenDoor();  // Open the door when all shards are found
+        if(shardsCollected == totalShards)
+        {
+            return true;
+        } else
+        {
+            return false;
+        }
     }
 }
