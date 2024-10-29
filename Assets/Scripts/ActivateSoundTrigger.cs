@@ -36,7 +36,7 @@ public class ActivateSoundTrigger : MonoBehaviour
 
     private void Update()
     {
-        if (source.isPlaying && Input.GetKey(KeyCode.E))
+        if (source.isPlaying && Input.GetKey(KeyCode.Escape))
         {
             source.Stop();
         }
