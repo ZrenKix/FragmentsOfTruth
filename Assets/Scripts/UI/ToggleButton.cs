@@ -20,9 +20,12 @@ public class ButtonToggle : MonoBehaviour
     private bool isPaused = false;
     private bool isTriggered = false;
 
+    private PlayerMovement playerMovement;
+
     void Start()
     {
         uiPanel.SetActive(false);
+        playerMovement= FindObjectOfType<PlayerMovement>();
     }
 
     void Update()
@@ -170,6 +173,7 @@ public class ButtonToggle : MonoBehaviour
         {
             audioSource.clip = clip;
             audioSource.Play();
+            playerMovement.PausePlayerMovement();
         }
     }
 }
